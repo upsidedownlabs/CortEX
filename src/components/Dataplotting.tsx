@@ -827,7 +827,7 @@ export default function SignalVisualizer() {
                                             </div>
                                             <div className="text-center ">
                                                 <div className={`text-xs sm:text-sm md:text-base font-semibold ${primaryAccent}`}>
-                                                    Left Hemisphere
+                                                    Left brain Hemisphere
                                                 </div>
                                             </div>
                                         </div>
@@ -1026,7 +1026,7 @@ export default function SignalVisualizer() {
 
                                 <div className={`flex flex-col items-center ${statCardBg} rounded-xl`} style={{ padding: '0.2rem ' }}>
                                     <span className={`text-xs ${labelText} mb-1`} style={{ fontSize: '16px' }}>
-                                        LOW
+                                        LOW HRV
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <span
@@ -1043,7 +1043,7 @@ export default function SignalVisualizer() {
 
                                 <div className={`flex flex-col items-center ${statCardBg} rounded-lg`} style={{ padding: '0.2rem ' }}>
                                     <span className={`text-xs ${labelText} mb-1`} style={{ fontSize: '16px' }}>
-                                        AVG
+                                        AVG HRV
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <span
@@ -1060,7 +1060,7 @@ export default function SignalVisualizer() {
 
                                 <div className={`flex flex-col items-center ${statCardBg} rounded-lg`} style={{ padding: '0.2rem ' }}>
                                     <span className={`text-xs ${labelText} mb-1`} style={{ fontSize: '16px' }}>
-                                        HIGH
+                                        HIGH HRV
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <span
