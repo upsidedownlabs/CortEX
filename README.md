@@ -189,7 +189,7 @@ Thank you for your interest in contributing — your support helps shape the Cor
       </a>
     </td>
     <td align="center">
-    <a href="https://github.com/Clumsy">
+    <a href="https://github.com/CIumsy">
     <img src="https://avatars.githubusercontent.com/u/76506050?v=4" width="80px;" alt="Krishnanshu Mittal"/><br />
     <sub><b>Krishnanshu Mittal</b></sub>
     </a>
