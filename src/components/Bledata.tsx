@@ -82,6 +82,7 @@ export function useBleStream(datastreamCallback?: (data: number[]) => void) {
   };
 
   const start = async () => {
+      if (streaming) return; // Prevent double start
     if (!controlRef.current || !dataRef.current) return;
     try {
       await controlRef.current.writeValue(new TextEncoder().encode('START'));

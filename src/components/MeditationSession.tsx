@@ -347,12 +347,12 @@ export const MeditationSession = ({
                     <div className="relative w-full h-full mx-auto">
 
                         {/* Responsive Timer Display */}
-                        <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center p-4">
                             <div className={`text-center ${accent}`}>
                                 <div className="text-lg sm:text-lg md:text-lg lg:text-2xl font-bold font-mono leading-tight">
                                     {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                                 </div>
-                                <div className="text-xs sm:text-sm md:text-2xl opacity-70 mt-1">
+                                <div className="text-md  md:text-lg  opacity-70 mt-1">
                                     remaining
                                 </div>
                             </div>

@@ -549,9 +549,8 @@ export default function SignalVisualizer() {
                                                     onClick={() => setSessionResults(null)}
                                                     className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
                             rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105
-    text-black cursor-pointer
-                                 ${buttonbg}
-                       `}
+                            text-black cursor-pointer
+                                 ${buttonbg}`}
                                                     style={{ padding: "0.3rem" }}
                                                 >
 
@@ -795,7 +794,7 @@ export default function SignalVisualizer() {
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <RadarChart
                                                         data={radarDataCh0Ref.current.length ? radarDataCh0Ref.current : bandData}
-                                                        cx="50%" cy="50%" outerRadius="80%"
+                                                        cx="50%" cy="50%" outerRadius="65%"
                                                     >
                                                         <PolarGrid
                                                             strokeDasharray="2 3"
@@ -840,7 +839,7 @@ export default function SignalVisualizer() {
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <RadarChart
                                                         data={radarDataCh1Ref.current.length ? radarDataCh1Ref.current : bandData}
-                                                        cx="50%" cy="50%" outerRadius="80%"
+                                                        cx="50%" cy="50%" outerRadius="65%"
                                                     >
                                                         <PolarGrid
                                                             strokeDasharray="2 3"
@@ -1087,8 +1086,6 @@ export default function SignalVisualizer() {
                                     </div>
                                 </div>
                             </div>
-
-
                         </div>
 
                         {/* ECG Chart - Remaining height */}
