@@ -167,11 +167,41 @@ Coming soon!
 
 Thank you for your interest in contributing — your support helps shape the CortEX. 🙌
 
-<center>
-<a href="https://github.com/Ritika8081/Meditation_Medusa/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ritika8081/Meditation_Medusa" />
-</a>
-</center>
+<!-- Custom Contributors List -->
+<table>
+  <tr>
+   <td align="center">
+      <a href="https://github.com/Amanmahe">
+        <img src="https://avatars.githubusercontent.com/u/98646204?v=4" width="80px;" alt="Aman Maheswari"/><br />
+        <sub><b>Aman Maheswari</b></sub>
+      </a>
+    </td>
+  <td align="center">
+      <a href="https://github.com/lorforlinux">
+        <img src="https://avatars.githubusercontent.com/u/20015794?v=4" width="80px;" alt="Deepak Khatri"/><br />
+        <sub><b>Deepak Khatri</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/akadeepesh">
+        <img src="https://avatars.githubusercontent.com/u/100466756?v=4" width="80px;" alt="Deepesh Kumar"/><br />
+        <sub><b>Deepesh Kumar</b></sub>
+      </a>
+    </td>
+    <td align="center">
+    <a href="https://github.com/Clumsy">
+    <img src="https://avatars.githubusercontent.com/u/76506050?v=4" width="80px;" alt="Krishnanshu Mittal"/><br />
+    <sub><b>Krishnanshu Mittal</b></sub>
+    </a>
+    </td>
+     <td align="center">
+      <a href="https://github.com/Ritika8081">
+        <img src="https://avatars.githubusercontent.com/u/103934960?v=4" width="80px;" alt="Ritika Mishra"/><br />
+        <sub><b>Ritika Mishra</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 At CortEX, we celebrate collaboration, curiosity, and creativity.
 
