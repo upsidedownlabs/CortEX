@@ -330,7 +330,7 @@ export const MeditationSession = ({
                                 className={`
                                   min-w-[120px] max-w-[160px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
                             rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm transform 
-    text-black cursor-pointer  ${buttonbg}
+                            text-black cursor-pointer  ${buttonbg}
                                 `}
                             >
 
@@ -402,7 +402,7 @@ export const MeditationSession = ({
                         onClick={stopMeditation}
                         className={`  min-w-[120px] max-w-[160px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
                             rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm transform 
-        text-black  cursor-pointer
+                        text-black  cursor-pointer
                                 ${buttonbg}
                                  
                               `}

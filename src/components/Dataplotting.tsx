@@ -826,7 +826,7 @@ export default function SignalVisualizer() {
                                             </div>
                                             <div className="text-center ">
                                                 <div className={`text-xs sm:text-sm md:text-base font-semibold ${primaryAccent}`}>
-                                                    Left brain Hemisphere
+                                                    Left Hemisphere
                                                 </div>
                                             </div>
                                         </div>
