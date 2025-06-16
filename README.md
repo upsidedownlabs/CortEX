@@ -24,8 +24,10 @@ A BLE-enabled biopotential signal board designed for:
 ## 🔑 Core Features
 
 ### 1. Real-Time EEG & ECG Visualization
-- **EEG waveforms:** Channels display Delta, Theta, Alpha, Beta, Gamma brainwaves signals.
+- **EEG waveforms:** Raw EEG data of the Left and Right hemispheres 
+- **EEG FFT spider plot** The Left and Right hemispheres EEG FFT data display Delta, Theta, Alpha, Beta, Gamma brainwave signals.
 - **ECG line graphs:** Clean, real-time ECG plots to extract heart metrics.
+- **Heart Rate Variability chart:** Displays real-time heart rate variability.
 - **Rendering:** Uses WebGL for performance and Recharts for intuitive graphing.
 
 ### 2. Mental & Physical State Classification
