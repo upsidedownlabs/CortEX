@@ -15,9 +15,10 @@ A BLE-enabled biopotential signal board designed for:
 
 - ✅ EEG (Electroencephalogram)
 - ✅ ECG (Electrocardiogram)
-- ✅ EMG/EOG via analog channels
+- ✅ EMG (Electromyogram)
+- ✅ EOG (Electrooculogram)
 
-> 💡 CortEX uses the NPG Lite’s BLE stream for real-time brain and heart activity visualization.
+> 💡 CortEX uses the [NPG Lite’s BLE stream](https://github.com/upsidedownlabs/Chords-Arduino-Firmware/blob/main/NPG-LITE-BLE/NPG-LITE-BLE.ino) for real-time brain and heart activity visualization.
 
 
 ## 🔑 Core Features
