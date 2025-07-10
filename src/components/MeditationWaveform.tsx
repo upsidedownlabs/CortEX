@@ -261,8 +261,6 @@ const MeditationAnalysis: React.FC<Props> = ({
     }
   };
 
-
-
   return (
     <div className={`w-full  h-full  bg-slate-800 rounded-sm overflow-hidden shadow-2xl ${className}`}>
       <div className="p-6" style={{ padding: '10px' }}>
@@ -298,18 +296,8 @@ const MeditationAnalysis: React.FC<Props> = ({
 
         {/* Session Insights */}
         <div className="mt-6 p-4 bg-emerald-900/20 rounded-xl border border-emerald-800/30" style={{ padding: '10px' }}>
-          <div className="flex items-center space-x-2 mb-2">
-            <Award className="w-4 h-10 text-emerald-400" />
-            <span className="text-sm font-medium text-emerald-300">Session Insights</span>
-          </div>
-          <p className="text-sm text-slate-200 leading-relaxed">
-            {meditationScore >= 80
-              ? "Outstanding session! You maintained deep meditative states with excellent mind control."
-              : meditationScore >= 60
-                ? "Good progress! Your relaxation response is developing well. Try extending session time."
-                : "Keep practicing! Focus on breathing techniques to improve alpha wave consistency."}
-          </p>
-          <span className="text-sm text-slate-200 mt-2 block ">CortEX is a wellness and research tool, not a medical device.
+
+          <span className="text-sm text-slate-200 mt-2 block ">CortEX application is an open-source free to use software designed to work with Neuro PlayGround Lite. It's is a wellness and research tool, not a medical application and should not be treated like one. There is no Warranty, you may use it on your own risk. You agree to the terms if you use the application.
           </span>
         </div>
 
