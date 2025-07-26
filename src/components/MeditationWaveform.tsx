@@ -224,12 +224,8 @@ const MeditationAnalysis: React.FC<Props> = ({
     ctx.font = '14px system-ui';
     ctx.textAlign = 'center';
 
-    let actualSessionDurationSeconds: number;
-    if (data.length > 1 && data[0].timestamp && data[data.length - 1].timestamp) {
-      actualSessionDurationSeconds = (data[data.length - 1].timestamp! - data[0].timestamp!) / 1000;
-    } else {
-      actualSessionDurationSeconds = sessionDuration * 60;
-    }
+    // Always use the exact duration passed from props
+    const actualSessionDurationSeconds = sessionDuration * 60;
 
     const timePerPhase = actualSessionDurationSeconds / 12;
 

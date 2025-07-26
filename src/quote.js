@@ -16,6 +16,13 @@ export const healthQuotes = [
   },
 
   {
+    text: "Health is the silent partner of every success.",
+    author: "Ritika Mishra",
+    category: "fitness"
+  },
+
+
+  {
     text: "Peace comes from within. Do not seek it without.",
     author: "Buddha",
     category: "meditation"
