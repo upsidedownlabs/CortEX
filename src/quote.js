@@ -37,6 +37,13 @@ export const healthQuotes = [
     author: "Thich Nhat Hanh",
     category: "meditation"
   },
+
+  {
+    text: "The world waits, but your body won’t. Take care of it.",
+    author: "Ritika Mishra",
+    category: "fitness"
+  },
+
   {
     text: "Wherever you are, be there totally.",
     author: "Eckhart Tolle",

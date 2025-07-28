@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useBleStream } from '../components/Bledata';
 import jsPDF from 'jspdf';
+import { DurationSelector } from './DurationSelector';
 
 export const MeditationSession = ({
     onStartSession,
@@ -132,7 +133,7 @@ export const MeditationSession = ({
 
         // Use the actual selected duration instead of calculating from timestamps
         const sessionDurationMs = duration * 60 * 1000;
-        const sessionDuration = `${duration} min`;
+        const sessionDuration = `${duration} min`; // Ensure 'duration' is the user-selected value
 
         const convert = (ticks: number) => ((ticks * 0.5) / 60).toFixed(2);
 
@@ -451,6 +452,26 @@ export const MeditationSession = ({
         doc.save(`${filename}.pdf`);
     };
 
+    // Add this ref to manage data collection interval
+    const dataCollectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        if (!isMeditating) {
+            // Clear any ongoing data collection
+            if (dataCollectionIntervalRef.current) {
+                clearInterval(dataCollectionIntervalRef.current);
+                dataCollectionIntervalRef.current = null;
+            }
+        }
+    }, [isMeditating]);
+
+    // Add this helper function
+    const formatPhaseDuration = (durationInSeconds: number) => {
+        const minutes = Math.floor(durationInSeconds / 60);
+        const seconds = Math.round(durationInSeconds % 60);
+        return `${minutes}m${seconds > 0 ? ` ${seconds}s` : ''}`;
+    };
+
     return (
         <div className="h-full w-full min-h-0 overflow-hidden relative flex flex-col">
             {!isMeditating ? (
@@ -459,30 +480,13 @@ export const MeditationSession = ({
                     <div className="flex-1 flex flex-col p-2 sm:p-3 md:p-4 space-y-3 sm:space-y-4 animate-in fade-in duration-300">
                         {/* Main Content - Uses remaining space */}
                         <div className="flex-1 flex flex-col justify-center items-center space-y-4 sm:space-y-6 md:space-y-8 min-h-0">
-                            {/* Duration Selection */}
-                            <div className="w-full max-w-sm px-4">
-                                <h3 className={`text-center text-xs sm:text-sm font-medium mb-2 ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>
-                                    Choose Duration
-                                </h3>
-                                {/* Duration Buttons - Improved layout */}
-                                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                                    {[3,10,15,30,45,60].map((val) => (
-                                        <button
-                                            key={val}
-                                            onClick={() => setDuration(val)}
-                                            disabled={!connected}
-                                            className={`px-1.5 py-1 rounded-md transition-all duration-200 
-                                            ${duration === val
-                                            ? `${buttonbg} text-zinc-800 shadow-sm`
-                                            : `${durationbtnBg} ${darkMode ? "text-gray-200" : "text-black"} hover:opacity-80`}
-                                            ${!connected ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
-                                            text-center`}
-                                        >
-                                            <span className="font-medium text-xs sm:text-sm">{val}m</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Duration Selection - Now using modular component */}
+                            <DurationSelector
+                                selectedDuration={duration}
+                                onDurationChange={setDuration}
+                                disabled={!connected}
+                                darkMode={darkMode}
+                            />
                         </div>
 
                         <div className="flex justify-center pt-2 pb-4 sm:pb-2 px-2" style={{ paddingBottom: '0.75rem' }}>
@@ -677,7 +681,7 @@ export const MeditationSession = ({
                 @keyframes breathe {
                     0%, 100% { 
                         transform: scale(1); 
-                        opacity: 0.8; 
+                        opacity: 0.8;
                     }
                     50% { 
                         transform: scale(1.05); 
