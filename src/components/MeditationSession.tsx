@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useBleStream } from '../components/Bledata';
-import jsPDF from 'jspdf';
+import { exportToPDF, SessionResultsType } from './SessionExport/exportToPDF';
 import { DurationSelector } from './DurationSelector';
 
 export const MeditationSession = ({
@@ -119,21 +118,20 @@ export const MeditationSession = ({
     };
 
     const stopMeditation = () => {
-        // Only allow stopping if the timer has reached zero
-        if (timeLeft <= 0) {
-            setIsMeditating(false);
-            const frozenData = sessionData.filter(d => sessionStartTime.current && d.timestamp >= sessionStartTime.current);
-            analyzeSession(frozenData);
-            onEndSession();
-        }
+        // Allow stopping at any time - remove the timeLeft check
+        setIsMeditating(false);
+        const frozenData = sessionData.filter(d => sessionStartTime.current && d.timestamp >= sessionStartTime.current);
+        analyzeSession(frozenData);
+        onEndSession();
     };
 
     const analyzeSession = (data: typeof sessionData) => {
         if (!data.length) return;
 
-        // Use the actual selected duration instead of calculating from timestamps
-        const sessionDurationMs = duration * 60 * 1000;
-        const sessionDuration = `${duration} min`; // Ensure 'duration' is the user-selected value
+        // Calculate actual session duration based on elapsed time
+        const actualDurationMs = sessionStartTime.current ? Date.now() - sessionStartTime.current : 0;
+        const actualDurationMinutes = Math.max(0.1, actualDurationMs / (1000 * 60)); // Minimum 0.1 minutes
+        const sessionDuration = `${actualDurationMinutes.toFixed(1)} min`;
 
         const convert = (ticks: number) => ((ticks * 0.5) / 60).toFixed(2);
 
@@ -199,7 +197,7 @@ export const MeditationSession = ({
         const focusScore = ((averages.alpha + averages.theta) / (averages.beta + 0.001)).toFixed(2);
 
         setSessionResults({
-            duration: duration * 60, // Set to exact selected duration in seconds
+            duration: actualDurationMs / 1000, // Actual duration in seconds
             averages,
             mentalState,
             stateDescription,
@@ -226,17 +224,14 @@ export const MeditationSession = ({
     useEffect(() => {
         // Handle automatic session completion when timer reaches zero
         if (isMeditating && timeLeft === 0) {
-            setIsMeditating(false);
-            const frozenData = sessionData.filter(d => sessionStartTime.current && d.timestamp >= sessionStartTime.current);
-            analyzeSession(frozenData);
-            onEndSession();
+            stopMeditation(); // Use the same function for consistency
         }
     }, [isMeditating, timeLeft]);
 
     useEffect(() => {
         // Handle countdown timer
         if (!isMeditating || timeLeft <= 0) return;
-        
+
         const timer = setInterval(() => {
             setTimeLeft(prev => {
                 if (prev <= 1) {
@@ -246,7 +241,7 @@ export const MeditationSession = ({
                 return prev - 1;
             });
         }, 1000);
-        
+
         return () => clearInterval(timer);
     }, [isMeditating, timeLeft]);
 
@@ -257,11 +252,11 @@ export const MeditationSession = ({
 
     const downloadSessionResults = (format: 'json' | 'csv' | 'pdf') => {
         if (!sessionResults) return;
-        
+
         // Prepare common data for all formats
         const sessionDate = new Date().toISOString().split('T')[0];
         const filename = `meditation-session-${sessionDate}`;
-        
+
         switch (format) {
             case 'json':
                 downloadJSON(filename);
@@ -294,11 +289,11 @@ export const MeditationSession = ({
             goodMeditationPercentage: sessionResults?.goodMeditationPct,
             brainSymmetry: sessionResults?.symmetry
         };
-        
+
         const dataStr = JSON.stringify(downloadData, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
-        
+
         const link = document.createElement('a');
         link.download = `${filename}.json`;
         link.href = url;
@@ -311,7 +306,7 @@ export const MeditationSession = ({
     const downloadCSV = (filename: string) => {
         // CSV header
         let csvContent = "Metric,Value\n";
-        
+
         // Add session data rows
         csvContent += `Date,${new Date().toISOString()}\n`;
         csvContent += `Duration,${sessionResults?.formattedDuration}\n`;
@@ -319,23 +314,23 @@ export const MeditationSession = ({
         csvContent += `Focus Score,${sessionResults?.focusScore}\n`;
         csvContent += `Dominant Brainwave,${sessionResults?.mostFrequent}\n`;
         csvContent += `Brain Symmetry,${sessionResults?.symmetry}\n\n`;
-        
+
         // Add brainwave averages
         csvContent += "Brainwave Averages,Value\n";
         csvContent += `Alpha,${sessionResults?.averages.alpha.toFixed(4)}\n`;
         csvContent += `Beta,${sessionResults?.averages.beta.toFixed(4)}\n`;
         csvContent += `Theta,${sessionResults?.averages.theta.toFixed(4)}\n`;
         csvContent += `Delta,${sessionResults?.averages.delta.toFixed(4)}\n\n`;
-        
+
         // Add state percentages
         csvContent += "Mental State,Percentage\n";
         for (const [state, percentage] of Object.entries(sessionResults?.statePercentages || {})) {
             csvContent += `${state},${percentage}%\n`;
         }
-        
+
         const dataBlob = new Blob([csvContent], { type: 'text/csv' });
         const url = URL.createObjectURL(dataBlob);
-        
+
         const link = document.createElement('a');
         link.download = `${filename}.csv`;
         link.href = url;
@@ -347,109 +342,7 @@ export const MeditationSession = ({
 
     const downloadPDF = (filename: string) => {
         if (!sessionResults) return;
-        
-        // Create PDF document
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        
-        // Add title and date
-        doc.setFontSize(22);
-        doc.setTextColor(44, 62, 80); // Dark blue header
-        doc.text("Meditation Session Report", pageWidth / 2, 20, { align: "center" });
-        
-        doc.setFontSize(12);
-        doc.setTextColor(100, 100, 100); // Gray text
-        const dateStr = new Date().toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        doc.text(dateStr, pageWidth / 2, 30, { align: "center" });
-        
-        // Add session overview
-        doc.setFontSize(16);
-        doc.setTextColor(52, 73, 94); // Dark blue-gray
-        doc.text("Session Overview", 20, 45);
-        
-        doc.setFontSize(11);
-        doc.setTextColor(60, 60, 60);
-        let yPos = 55;
-        
-        // Session details
-        const details = [
-            ["Duration", sessionResults.formattedDuration],
-            ["Primary Mental State", sessionResults.mentalState],
-            ["Focus Score", sessionResults.focusScore],
-            ["Brain Symmetry", sessionResults.symmetry],
-            ["Dominant Brainwave", sessionResults.mostFrequent]
-        ];
-        
-        details.forEach(([key, value]) => {
-            doc.setFont('helvetica', 'bold');
-            doc.text(`${key}:`, 20, yPos);
-            doc.setFont('helvetica', 'normal');
-            doc.text(String(value), 80, yPos);
-            yPos += 8;
-        });
-        
-        // Add description
-        yPos += 5;
-        doc.setFontSize(16);
-        doc.setTextColor(52, 73, 94);
-        doc.text("Session Insights", 20, yPos);
-        yPos += 10;
-        
-        doc.setFontSize(11);
-        doc.setTextColor(60, 60, 60);
-        
-        // Handle multi-line text for description
-        const description = sessionResults.stateDescription;
-        const splitDescription = doc.splitTextToSize(description, pageWidth - 40);
-        doc.text(splitDescription, 20, yPos);
-        yPos += splitDescription.length * 7 + 10;
-        
-        // Add brainwave data
-        doc.setFontSize(16);
-        doc.setTextColor(52, 73, 94);
-        doc.text("Brainwave Activity", 20, yPos);
-        yPos += 10;
-        
-        doc.setFontSize(11);
-        doc.setTextColor(60, 60, 60);
-        
-        // Brainwave table headers
-        doc.setFont('helvetica', 'bold');
-        doc.text("Brainwave", 20, yPos);
-        doc.text("Value", 80, yPos);
-        doc.text("% of Total", 120, yPos);
-        yPos += 7;
-        doc.setFont('helvetica', 'normal');
-        
-        // Brainwave table rows
-        const brainwaves = [
-            ["Alpha", sessionResults.averages.alpha.toFixed(4), sessionResults.statePercentages.Relaxed],
-            ["Beta", sessionResults.averages.beta.toFixed(4), sessionResults.statePercentages.Focused],
-            ["Theta", sessionResults.averages.theta.toFixed(4), sessionResults.statePercentages.Meditation],
-            ["Delta", sessionResults.averages.delta.toFixed(4), sessionResults.statePercentages.Drowsy]
-        ];
-        
-        brainwaves.forEach(([name, value, percentage]) => {
-            doc.text(name, 20, yPos);
-            doc.text(String(value), 80, yPos);
-            doc.text(`${percentage}%`, 120, yPos);
-            yPos += 7;
-        });
-        
-        // Add footer
-        yPos = doc.internal.pageSize.getHeight() - 20;
-        doc.setFontSize(10);
-        doc.setTextColor(150, 150, 150);
-        doc.text("CortEX Meditation - Brain Activity Report", pageWidth / 2, yPos, { align: "center" });
-        
-        // Save the PDF
-        doc.save(`${filename}.pdf`);
+        exportToPDF(filename, sessionResults);
     };
 
     // Add this ref to manage data collection interval
@@ -470,6 +363,135 @@ export const MeditationSession = ({
         const minutes = Math.floor(durationInSeconds / 60);
         const seconds = Math.round(durationInSeconds % 60);
         return `${minutes}m${seconds > 0 ? ` ${seconds}s` : ''}`;
+    };
+
+    // Add useEffect to save session history after each session
+    useEffect(() => {
+        if (sessionResults) {
+            const historyKey = "meditationHistory";
+            const previousData = JSON.parse(localStorage.getItem(historyKey) || "[]");
+
+            const newEntry = {
+                ...sessionResults,
+                timestamp: Date.now(),
+                sessionDate: new Date().toISOString().split('T')[0],
+                sessionTime: new Date().toLocaleTimeString(),
+                sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            };
+
+            // Keep only last 100 sessions to prevent excessive storage
+            const updatedHistory = [...previousData, newEntry].slice(-100);
+            
+            // Save updated history
+            localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
+            
+            console.log(`Session saved! Total sessions: ${updatedHistory.length}`);
+        }
+    }, [sessionResults]);
+
+    // Helper function to get progress trends
+    const getProgressTrends = () => {
+        const historyKey = "meditationHistory";
+        const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        
+        if (history.length < 2) return null;
+
+        const recent = history.slice(-5); // Last 5 sessions
+        const previous = history.slice(-10, -5); // Previous 5 sessions
+        
+        if (previous.length === 0) return null;
+
+        const calculateAverage = (sessions: any[], key: string) => {
+            return sessions.reduce((sum, session) => {
+                if (key === 'goodMeditationPct') {
+                    return sum + parseFloat(session[key]);
+                }
+                if (key === 'focusScore') {
+                    return sum + parseFloat(session[key]);
+                }
+                if (key.includes('.')) {
+                    const [parent, child] = key.split('.');
+                    return sum + session[parent][child];
+                }
+                return sum + session[key];
+            }, 0) / sessions.length;
+        };
+
+        const trends = {
+            alpha: calculateAverage(recent, 'averages.alpha') - calculateAverage(previous, 'averages.alpha'),
+            theta: calculateAverage(recent, 'averages.theta') - calculateAverage(previous, 'averages.theta'),
+            beta: calculateAverage(recent, 'averages.beta') - calculateAverage(previous, 'averages.beta'),
+            symmetry: calculateAverage(recent, 'averages.symmetry') - calculateAverage(previous, 'averages.symmetry'),
+            goodMeditation: calculateAverage(recent, 'goodMeditationPct') - calculateAverage(previous, 'goodMeditationPct'),
+            focusScore: calculateAverage(recent, 'focusScore') - calculateAverage(previous, 'focusScore'),
+        };
+
+        return trends;
+    };
+
+    // Function to get session statistics
+    const getSessionStats = () => {
+        const historyKey = "meditationHistory";
+        const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        
+        const today = new Date().toISOString().split('T')[0];
+        
+        const todaySessions = history.filter((session: any) => session.sessionDate === today).length;
+        const totalSessions = history.length;
+        
+        // Calculate current streak (consecutive days with sessions)
+        let streak = 0;
+        const uniqueDates = [...new Set(history.map((s: any) => s.sessionDate))].sort().reverse();
+        
+        for (let i = 0; i < uniqueDates.length; i++) {
+            const date = uniqueDates[i];
+            const daysDiff = Math.floor((new Date().getTime() - new Date(date as string).getTime()) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff === i) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        
+        // Weekly and monthly stats
+        const last7Days = history.filter((session: any) => {
+            const sessionDate = new Date(session.timestamp);
+            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            return sessionDate >= weekAgo;
+        }).length;
+        
+        const last30Days = history.filter((session: any) => {
+            const sessionDate = new Date(session.timestamp);
+            const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            return sessionDate >= monthAgo;
+        }).length;
+        
+        return { 
+            todaySessions, 
+            totalSessions, 
+            streak, 
+            last7Days, 
+            last30Days,
+            averageSessionsPerWeek: (last30Days / 4.3).toFixed(1)
+        };
+    };
+
+    // Function to get improvement percentage for display
+    const getImprovementText = (value: number, type: 'percentage' | 'score' = 'percentage') => {
+        if (Math.abs(value) < 0.1) return { text: "Stable", icon: "➖", color: "text-blue-500" };
+        
+        const isPositive = value > 0;
+        const absValue = Math.abs(value);
+        const text = type === 'percentage' 
+            ? `${isPositive ? '+' : '-'}${absValue.toFixed(1)}%`
+            : `${isPositive ? '+' : '-'}${absValue.toFixed(2)}`;
+        
+        return {
+            text,
+            icon: isPositive ? "📈" : "📉",
+            color: isPositive ? "text-green-500" : "text-red-500"
+        };
     };
 
     return (
@@ -507,13 +529,69 @@ export const MeditationSession = ({
 
                     </div>
                 ) : (
-                    // Session Results UI - Responsive layout
+                    // Enhanced Session Results UI with Progress Tracking
                     <div className="flex-1 flex flex-col animate-in fade-in duration-500 p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-3 md:space-y-4">
-                        {/* Results Header */}
+                        {/* Results Header with Progress Stats */}
                         <div className="text-center space-y-2 sm:space-y-3 flex-shrink-0">
-                            <h3 className={`text-base sm:text-lg md:text-xl font-bold ${textPrimary}`}>
-                                Session Complete
-                            </h3>
+                         
+                            
+                            {/* Progress Stats */}
+                            {(() => {
+                                const stats = getSessionStats();
+                                const trends = getProgressTrends();
+                                
+                                return (
+                                    <div className="space-y-2">
+                                        {/* Main Stats Row */}
+                                
+                                        
+                                        {/* Trend Analysis */}
+                                        {trends && (
+                                            <div className="bg-opacity-50 rounded-lg p-3 space-y-2" 
+                                                 style={{ backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+                                                <div className={`text-xs font-semibold ${textPrimary}`}>Recent Progress Trends:</div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    {(() => {
+                                                        const meditationImprovement = getImprovementText(trends.goodMeditation);
+                                                        const focusImprovement = getImprovementText(trends.focusScore, 'score');
+                                                        const alphaImprovement = getImprovementText(trends.alpha * 100);
+                                                        const thetaImprovement = getImprovementText(trends.theta * 100);
+                                                        
+                                                        return (
+                                                            <>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span>🧘 Meditation:</span>
+                                                                    <span className={`flex items-center gap-1 ${meditationImprovement.color}`}>
+                                                                        {meditationImprovement.icon} {meditationImprovement.text}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span>🎯 Focus:</span>
+                                                                    <span className={`flex items-center gap-1 ${focusImprovement.color}`}>
+                                                                        {focusImprovement.icon} {focusImprovement.text}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span>🌊 Alpha:</span>
+                                                                    <span className={`flex items-center gap-1 ${alphaImprovement.color}`}>
+                                                                        {alphaImprovement.icon} {alphaImprovement.text}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span>🎵 Theta:</span>
+                                                                    <span className={`flex items-center gap-1 ${thetaImprovement.color}`}>
+                                                                        {thetaImprovement.icon} {thetaImprovement.text}
+                                                                    </span>
+                                                                </div>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         {/* Results Content - Takes remaining space with scroll */}
@@ -531,65 +609,42 @@ export const MeditationSession = ({
                             })}
                         </div>
 
-                        {/* New Session Button - Responsive sizing */}
-                        <div className="flex justify-center space-x-3" style={{ paddingBottom: '0.75rem' }}>
+                        {/* Enhanced Action Buttons with Progress Tracking */}
+                        <div className="flex justify-center space-x-3" style={{ paddingBottom: '0.75rem', padding: '0.75rem' }}>
                             <button
                                 onClick={() => setShowResults(true)}
                                 className={`
                                   min-w-[120px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm 
                                   rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm
-                                  text-black cursor-pointer ${buttonbg}
+                                  text-black cursor-pointer ${buttonbg} hover:scale-105
                                 `}
                             >
                                 <span className="relative z-10 truncate">View Results</span>
                             </button>
-                            
-                            <div className="relative group">
-    <button
-      onClick={() => downloadSessionResults('pdf')}
-      className={`
-        min-w-[120px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm 
-        rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm
-        text-black cursor-pointer ${darkMode ? "bg-emerald-500" : "bg-emerald-600"}
-      `}
-    >
-      <svg 
-        className="w-4 h-4 relative z-10 flex-shrink-0" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-      </svg>
-      <span className="relative z-10 truncate">Download PDF</span>
-    </button>
-    
-    <div className="absolute right-0 top-full mt-1 hidden group-hover:block bg-white dark:bg-zinc-800 shadow-lg rounded-md overflow-hidden z-10">
-      <button 
-        onClick={() => downloadSessionResults('pdf')}
-        className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700"
-      >
-        PDF Format
-      </button>
-      <button 
-        onClick={() => downloadSessionResults('json')}
-        className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700"
-      >
-        JSON Format
-      </button>
-      <button 
-        onClick={() => downloadSessionResults('csv')}
-        className="w-full px-3 py-2 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700"
-      >
-        CSV Format
-      </button>
-    </div>
-  </div>
+
+                            <button
+                                onClick={() => downloadSessionResults('pdf')}
+                                className={`
+                                    min-w-[120px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm 
+                                    rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm
+                                    text-black cursor-pointer hover:scale-105 ${darkMode ? "bg-emerald-500" : "bg-emerald-600"}
+                                `}
+                            >
+                                <svg
+                                    className="w-4 h-4 relative z-10 flex-shrink-0"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span className="relative z-10 truncate">Download PDF</span>
+                            </button>
                         </div>
                     </div>
                 )
             ) : (
-                // Active Meditation UI - Responsive circular timer
+                // Active Meditation UI - Modified to allow ending anytime
                 <div className="flex-1 flex flex-col justify-center items-center text-center animate-in fade-in duration-300 p-2 sm:p-3 md:p-4 space-y-3 sm:space-y-4 md:space-y-5">
                     {/* Responsive Timer Circle */}
 
@@ -646,34 +701,25 @@ export const MeditationSession = ({
                     </div>
 
 
-                    {/* Responsive End Session Button */}
+                    {/* Modified End Session Button - Always enabled */}
                     <button
-                        disabled={timeLeft > 0}
                         onClick={stopMeditation}
                         className={`min-w-[120px] max-w-[160px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
-        rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm transform 
-        ${timeLeft > 0 
-            ? 'opacity-50 cursor-not-allowed bg-gray-400 text-gray-700' 
-            : `${buttonbg} text-black cursor-pointer`
-        }`}
+                        rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm transform 
+                        ${buttonbg} text-black cursor-pointer hover:scale-105`}
                         style={{ marginBottom: '0.75rem' }}
                     >
                         <svg className="w-4 h-4 sm:w-5 sm:h-5 relative z-10 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
                         </svg>
-                        <span className="relative z-10 truncate">
-        {timeLeft > 0 ? "Wait for completion" : "End Session"}
-    </span>
+                        <span className="relative z-10 truncate">End Session</span>
                     </button>
 
-                    {/* Add this below the timer display */}
-                    {timeLeft > 0 && (
-    <div className={`text-xs text-center mt-2 ${darkMode ? "text-zinc-400" : "text-zinc-600"}`}>
-        Session must be completed in full
-    </div>
-)}
-
+                    {/* Modified status message */}
+                    <div className={`text-xs text-center mt-2 ${darkMode ? "text-zinc-400" : "text-zinc-600"}`}>
+                        {timeLeft > 0 ? "You can end the session at any time" : "Session completed!"}
+                    </div>
                 </div>
             )}
 
