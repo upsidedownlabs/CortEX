@@ -544,8 +544,11 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     const history = JSON.parse(localStorage.getItem("meditationHistory") || "[]");
     // Remove non-serializable fields
     const { convert, ...serializableSession } = sessionResults;
+    // Add new session to the end
     history.push(serializableSession);
-    const dataStr = JSON.stringify(history);
+    // Keep only the last 5 sessions (FIFO)
+    const updatedHistory = history.slice(-5);
+    const dataStr = JSON.stringify(updatedHistory);
     if (dataStr.length > 5000000) {
       throw new Error("Session history is too large for localStorage.");
     }
@@ -554,6 +557,22 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     console.error("Error saving session data:", e);
     alert("Error saving session data. Please clear some storage or check your browser settings.");
   }
+
+  // Update sessionDate for existing records
+  const history = JSON.parse(localStorage.getItem("meditationHistory") || "[]");
+  interface HistorySession {
+    sessionDate?: string;
+    timestamp?: number;
+    [key: string]: any;
+  }
+
+  (history as HistorySession[]).forEach((s: HistorySession) => {
+    if (!s.sessionDate && s.timestamp) {
+      const d = new Date(s.timestamp);
+      s.sessionDate = d.toISOString().split('T')[0];
+    }
+  });
+  localStorage.setItem("meditationHistory", JSON.stringify(history));
 
   function getImprovementText(value: number, type: 'percentage' | 'score' = 'percentage') {
     if (Math.abs(value) < 0.1) return { text: "Stable", icon: "➖" };
