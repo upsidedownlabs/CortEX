@@ -152,6 +152,32 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   // Get historical data for progress tracking
   const historyData = JSON.parse(localStorage.getItem("meditationHistory") || "[]");
 
+  function getProgressTrends(history: any[]) {
+    if (history.length < 2) return null;
+    const recent = history.slice(-1);
+    const previous = history.slice(-2, -1);
+    if (previous.length === 0) return null;
+
+    const calculateAverage = (sessions: any[], key: string) => {
+      return sessions.reduce((sum, session) => {
+        if (key === 'goodMeditationPct') return sum + parseFloat(session[key]);
+        if (key === 'focusScore') return sum + parseFloat(session[key]);
+        if (key.includes('.')) {
+          const [parent, child] = key.split('.');
+          return sum + session[parent][child];
+        }
+        return sum + session[key];
+      }, 0) / sessions.length;
+    };
+
+    return {
+      goodMeditation: calculateAverage(recent, 'goodMeditationPct') - calculateAverage(previous, 'goodMeditationPct'),
+      focusScore: calculateAverage(recent, 'focusScore') - calculateAverage(previous, 'focusScore'),
+      alpha: calculateAverage(recent, 'averages.alpha') - calculateAverage(previous, 'averages.alpha'),
+      theta: calculateAverage(recent, 'averages.theta') - calculateAverage(previous, 'averages.theta'),
+    };
+  }
+
   // Calculate progress statistics
   const getProgressStats = () => {
     if (historyData.length < 2) return null;
@@ -209,6 +235,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   };
 
   const progressStats = getProgressStats();
+  const progressTrends = getProgressTrends(historyData);
 
   // Header
   doc.setFontSize(24);
@@ -235,7 +262,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   let yPos = 60;
 
   // Session Summary Card
-  doc.setFillColor(248, 249, 250);
+  doc.setFillColor(228, 229, 230);
   doc.rect(15, yPos - 5, pageWidth - 30, 55, 'F');
   doc.setFontSize(18);
   doc.setTextColor(44, 62, 80);
@@ -255,6 +282,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   yPos += 25;
 
   // --- Detailed Session Overview ---
+  yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 40);
   doc.setFontSize(16);
   doc.setTextColor(52, 73, 94);
@@ -294,11 +322,39 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.text(`Meditation Quality: ${sessionResults.goodMeditationPct}%`, 20, yPos);
   yPos += 15;
 
-  // --- Mind State Distribution Pie Chart (already present above) ---
+  // --- Recent Progress Trends ---
+  yPos += 10; // Add margin before heading
+  const trends = getProgressTrends(historyData);
+  if (trends) {
+    yPos = checkNewPage(yPos, 25);
+    doc.setFontSize(16);
+    doc.setTextColor(52, 73, 94);
+    doc.text("Recent Progress Trends", 20, yPos);
+    yPos += 8;
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
 
-  // --- Progress Trends Section (already present above) ---
+    const meditationImprovement = getImprovementText(trends.goodMeditation);
+    const focusImprovement = getImprovementText(trends.focusScore, 'score');
+    const alphaImprovement = getImprovementText(trends.alpha * 100);
+    const thetaImprovement = getImprovementText(trends.theta * 100);
 
-  // --- Detailed Session Averages ---
+    const trendLines = [
+      `Meditation: ${meditationImprovement.text}`,
+      `Focus: ${focusImprovement.text}`,
+      `Alpha: ${alphaImprovement.text}`,
+      `Theta: ${thetaImprovement.text}`,
+    ];
+
+    trendLines.forEach(line => {
+      yPos = checkNewPage(yPos, 8);
+      doc.text(line, 24, yPos);
+      yPos += 7;
+    });
+  }
+
+  // --- Session Averages ---
+  yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 30);
   doc.setFontSize(16);
   doc.setTextColor(52, 73, 94);
@@ -325,6 +381,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   yPos += 15;
 
   // --- Streak and Consistency ---
+  yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 20);
   doc.setFontSize(16);
   doc.setTextColor(52, 73, 94);
@@ -347,6 +404,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   }
 
   // --- Improvement Explanation ---
+  yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 20);
   doc.setFontSize(16);
   doc.setTextColor(52, 73, 94);
@@ -376,6 +434,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   }
 
   // --- Recommendations ---
+  yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 30);
   doc.setFontSize(16);
   doc.setTextColor(52, 73, 94);
@@ -392,15 +451,15 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.setTextColor(60, 60, 60);
   const recommendations = quality >= 60
     ? [
-        "- Extend your session by a few minutes for deeper practice.",
-        "- Try new breathing or mindfulness techniques.",
-        "- Maintain your streak for lasting benefits."
-      ]
+      "- Extend your session by a few minutes for deeper practice.",
+      "- Try new breathing or mindfulness techniques.",
+      "- Maintain your streak for lasting benefits."
+    ]
     : [
-        "- Practice regularly, even short sessions help.",
-        "- Use guided meditations for support.",
-        "- Find a quiet, comfortable space."
-      ];
+      "- Practice regularly, even short sessions help.",
+      "- Use guided meditations for support.",
+      "- Find a quiet, comfortable space."
+    ];
   recommendations.forEach(rec => {
     yPos = checkNewPage(yPos, 8);
     doc.text(rec, 20, yPos);
@@ -408,6 +467,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   });
 
   // --- Last 5 Session Summary Table ---
+  yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 30);
   doc.setFontSize(16);
   doc.setTextColor(52, 73, 94);
@@ -461,6 +521,8 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     yPos += 8;
   });
 
+
+
   // --- Footer ---
   const finalYPos = doc.internal.pageSize.getHeight() - 15;
   doc.setFontSize(10);
@@ -476,4 +538,34 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   }
 
   doc.save(`${filename}.pdf`);
+
+  // When saving session data
+  try {
+    const history = JSON.parse(localStorage.getItem("meditationHistory") || "[]");
+    // Remove non-serializable fields
+    const { convert, ...serializableSession } = sessionResults;
+    history.push(serializableSession);
+    const dataStr = JSON.stringify(history);
+    if (dataStr.length > 5000000) {
+      throw new Error("Session history is too large for localStorage.");
+    }
+    localStorage.setItem("meditationHistory", dataStr);
+  } catch (e) {
+    console.error("Error saving session data:", e);
+    alert("Error saving session data. Please clear some storage or check your browser settings.");
+  }
+
+  function getImprovementText(value: number, type: 'percentage' | 'score' = 'percentage') {
+    if (Math.abs(value) < 0.1) return { text: "Stable", icon: "➖" };
+    const isPositive = value > 0;
+    const absValue = Math.abs(value);
+    const text = type === 'percentage'
+      ? `${isPositive ? '+' : '-'}${absValue.toFixed(1)}%`
+      : `${isPositive ? '+' : '-'}${absValue.toFixed(2)}`;
+    return {
+      text,
+      icon: isPositive ? "📈" : "📉"
+    };
+  }
 };
+

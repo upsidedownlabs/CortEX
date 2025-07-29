@@ -7,8 +7,14 @@ export const healthQuotes = [
     author: "Leigh Hunt",
     category: "fitness"
   },
-  
-  
+
+  {
+    text: "Fuel your body like your dreams depend on it—because they do.",
+    author: "Ritika Mishra",
+    category: "fitness"
+  },
+
+
   {
     text: "Take care of your body. It's the only place you have to live.",
     author: "Jim Rohn",
@@ -27,11 +33,24 @@ export const healthQuotes = [
     author: "Buddha",
     category: "meditation"
   },
+
+  {
+    text: "Exercise is 10% effort and 90% convincing yourself to start.",
+    author: "Ritika Mishra",
+    category: "fitness"
+  },
   {
     text: "Mindfulness is about being fully awake in our lives.",
     author: "Jon Kabat-Zinn",
     category: "meditation"
   },
+
+  {
+    text: "The hardest weight to lift is your own excuse.",
+    author: "Ritika Mishra",
+    category: "fitness"
+  },
+
   {
     text: "The present moment is the only time over which we have dominion.",
     author: "Thich Nhat Hanh",
@@ -48,6 +67,18 @@ export const healthQuotes = [
     text: "Wherever you are, be there totally.",
     author: "Eckhart Tolle",
     category: "meditation"
+  },
+
+  {
+    text: "You can’t hustle through a broken system—especially your own.",
+    author: "Ritika Mishra",
+    category: "fitness"
+  },
+
+  {
+    text: "Your mind isn’t noisy. It’s just unheard.",
+    author: "Ritika Mishra",
+    category: "fitness"
   },
 
   {
@@ -73,11 +104,16 @@ export const healthQuotes = [
     category: "wellness"
   },
   {
+    text: "Slow is not weak. It's what sustainable feels like.",
+    author: "Ritika Mishra",
+    category: "wellness"
+  },
+  {
     text: "Happiness is the highest form of health.",
     author: "Dalai Lama",
     category: "wellness"
   },
-  
+
 ];
 
 // Utility functions for working with quotes

@@ -379,12 +379,12 @@ export const MeditationSession = ({
                 sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             };
 
-            // Keep only last 100 sessions to prevent excessive storage
-            const updatedHistory = [...previousData, newEntry].slice(-100);
-            
+            // Keep only last 5 sessions to prevent excessive storage
+            const updatedHistory = [...previousData, newEntry].slice(-5);
+
             // Save updated history
             localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
-            
+
             console.log(`Session saved! Total sessions: ${updatedHistory.length}`);
         }
     }, [sessionResults]);
@@ -393,12 +393,12 @@ export const MeditationSession = ({
     const getProgressTrends = () => {
         const historyKey = "meditationHistory";
         const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-        
+
         if (history.length < 2) return null;
 
         const recent = history.slice(-5); // Last 5 sessions
         const previous = history.slice(-10, -5); // Previous 5 sessions
-        
+
         if (previous.length === 0) return null;
 
         const calculateAverage = (sessions: any[], key: string) => {
@@ -433,45 +433,45 @@ export const MeditationSession = ({
     const getSessionStats = () => {
         const historyKey = "meditationHistory";
         const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-        
+
         const today = new Date().toISOString().split('T')[0];
-        
+
         const todaySessions = history.filter((session: any) => session.sessionDate === today).length;
         const totalSessions = history.length;
-        
+
         // Calculate current streak (consecutive days with sessions)
         let streak = 0;
         const uniqueDates = [...new Set(history.map((s: any) => s.sessionDate))].sort().reverse();
-        
+
         for (let i = 0; i < uniqueDates.length; i++) {
             const date = uniqueDates[i];
             const daysDiff = Math.floor((new Date().getTime() - new Date(date as string).getTime()) / (1000 * 60 * 60 * 24));
-            
+
             if (daysDiff === i) {
                 streak++;
             } else {
                 break;
             }
         }
-        
+
         // Weekly and monthly stats
         const last7Days = history.filter((session: any) => {
             const sessionDate = new Date(session.timestamp);
             const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             return sessionDate >= weekAgo;
         }).length;
-        
+
         const last30Days = history.filter((session: any) => {
             const sessionDate = new Date(session.timestamp);
             const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
             return sessionDate >= monthAgo;
         }).length;
-        
-        return { 
-            todaySessions, 
-            totalSessions, 
-            streak, 
-            last7Days, 
+
+        return {
+            todaySessions,
+            totalSessions,
+            streak,
+            last7Days,
             last30Days,
             averageSessionsPerWeek: (last30Days / 4.3).toFixed(1)
         };
@@ -480,13 +480,13 @@ export const MeditationSession = ({
     // Function to get improvement percentage for display
     const getImprovementText = (value: number, type: 'percentage' | 'score' = 'percentage') => {
         if (Math.abs(value) < 0.1) return { text: "Stable", icon: "➖", color: "text-blue-500" };
-        
+
         const isPositive = value > 0;
         const absValue = Math.abs(value);
-        const text = type === 'percentage' 
+        const text = type === 'percentage'
             ? `${isPositive ? '+' : '-'}${absValue.toFixed(1)}%`
             : `${isPositive ? '+' : '-'}${absValue.toFixed(2)}`;
-        
+
         return {
             text,
             icon: isPositive ? "📈" : "📉",
@@ -533,22 +533,22 @@ export const MeditationSession = ({
                     <div className="flex-1 flex flex-col animate-in fade-in duration-500 p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-3 md:space-y-4">
                         {/* Results Header with Progress Stats */}
                         <div className="text-center space-y-2 sm:space-y-3 flex-shrink-0">
-                         
-                            
+
+
                             {/* Progress Stats */}
                             {(() => {
                                 const stats = getSessionStats();
                                 const trends = getProgressTrends();
-                                
+
                                 return (
                                     <div className="space-y-2">
                                         {/* Main Stats Row */}
-                                
-                                        
+
+
                                         {/* Trend Analysis */}
                                         {trends && (
-                                            <div className="bg-opacity-50 rounded-lg p-3 space-y-2" 
-                                                 style={{ backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+                                            <div className="bg-opacity-50 rounded-lg p-3 space-y-2"
+                                                style={{ backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
                                                 <div className={`text-xs font-semibold ${textPrimary}`}>Recent Progress Trends:</div>
                                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                                     {(() => {
@@ -556,7 +556,7 @@ export const MeditationSession = ({
                                                         const focusImprovement = getImprovementText(trends.focusScore, 'score');
                                                         const alphaImprovement = getImprovementText(trends.alpha * 100);
                                                         const thetaImprovement = getImprovementText(trends.theta * 100);
-                                                        
+
                                                         return (
                                                             <>
                                                                 <div className="flex items-center justify-between">
