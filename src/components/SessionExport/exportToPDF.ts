@@ -31,6 +31,7 @@ export type SessionResultsType = {
   weightedEEGScore: number;
   averageHRV: number;    // ✅ new
   averageBPM: number;    // ✅ new
+  sessionDate?: string;  // ✅ fix: add optional sessionDate
 };
 
 export const exportToPDF = (filename: string, sessionResults: SessionResultsType) => {
@@ -508,13 +509,22 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.setLineWidth(0.5);
   doc.line(tableX, yPos, tableX + colWidths.reduce((a, b) => a + b, 0), yPos);
 
-  // Table rows
+  // Table rows - Fix missing dates
   const last5 = historyData.slice(-5).reverse();
   last5.forEach((session: any) => {
     let rowX = tableX;
-    const sessionDate = session.sessionDate
-      ? new Date(session.sessionDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
-      : "";
+    
+    // Ensure session has a date - fix the missing date issue
+    let sessionDate = "";
+    if (session.sessionDate) {
+      sessionDate = new Date(session.sessionDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    } else if (session.timestamp) {
+      sessionDate = new Date(session.timestamp).toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    } else {
+      // Fallback to today's date if no timestamp available
+      sessionDate = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    }
+    
     const quality = session.goodMeditationPct ? `${parseFloat(session.goodMeditationPct).toFixed(1)}%` : "";
     const focus = session.focusScore ? Number(session.focusScore).toFixed(2) : "";
     const state = session.mentalState || "";
@@ -548,40 +558,58 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
 
   doc.save(`${filename}.pdf`);
 
-  // When saving session data
+  // Fix the localStorage overload issue - store only essential data
   try {
     const history = JSON.parse(localStorage.getItem("meditationHistory") || "[]");
-    // Remove non-serializable fields
-    const { convert, ...serializableSession } = sessionResults;
-    // Add new session to the end
-    history.push(serializableSession);
-    // Keep only the last 5 sessions (FIFO)
-    const updatedHistory = history.slice(-5);
-    const dataStr = JSON.stringify(updatedHistory);
-    if (dataStr.length > 5000000) {
-      throw new Error("Session history is too large for localStorage.");
-    }
-    localStorage.setItem("meditationHistory", dataStr);
+    
+    // Create a lightweight version of session results for storage
+    const lightweightSession = {
+      sessionDate: new Date().toISOString().split('T')[0],
+      formattedDuration: sessionResults.formattedDuration,
+      goodMeditationPct: sessionResults.goodMeditationPct,
+      focusScore: sessionResults.focusScore,
+      mentalState: sessionResults.mentalState,
+      averages: sessionResults.averages,
+      averageHRV: sessionResults.averageHRV,
+      averageBPM: sessionResults.averageBPM,
+      // Don't store the full data array - it's too large
+      timestamp: Date.now() // For fallback date calculation
+    };
+    
+    // Keep only last 4, add new one = total of 5 max
+    const trimmedHistory = history.slice(-4);
+    trimmedHistory.push(lightweightSession);
+    
+    // Update sessionDate for existing records if missing
+    trimmedHistory.forEach((s: any) => {
+      if (!s.sessionDate && s.timestamp) {
+        const d = new Date(s.timestamp);
+        s.sessionDate = d.toISOString().split('T')[0];
+      }
+    });
+    
+    localStorage.setItem("meditationHistory", JSON.stringify(trimmedHistory));
   } catch (e) {
     console.error("Error saving session data:", e);
-    alert("Error saving session data. Please clear some storage or check your browser settings.");
-  }
-
-  // Update sessionDate for existing records
-  const history = JSON.parse(localStorage.getItem("meditationHistory") || "[]");
-  interface HistorySession {
-    sessionDate?: string;
-    timestamp?: number;
-    [key: string]: any;
-  }
-
-  (history as HistorySession[]).forEach((s: HistorySession) => {
-    if (!s.sessionDate && s.timestamp) {
-      const d = new Date(s.timestamp);
-      s.sessionDate = d.toISOString().split('T')[0];
+    // If still failing, clear old data and try with just the current session
+    try {
+      const lightweightSession = {
+        sessionDate: new Date().toISOString().split('T')[0],
+        formattedDuration: sessionResults.formattedDuration,
+        goodMeditationPct: sessionResults.goodMeditationPct,
+        focusScore: sessionResults.focusScore,
+        mentalState: sessionResults.mentalState,
+        averages: sessionResults.averages,
+        averageHRV: sessionResults.averageHRV,
+        averageBPM: sessionResults.averageBPM,
+        timestamp: Date.now()
+      };
+      localStorage.setItem("meditationHistory", JSON.stringify([lightweightSession]));
+    } catch (e2) {
+      console.error("Critical storage error:", e2);
+      alert("Storage full. Please clear browser data or use a different device.");
     }
-  });
-  localStorage.setItem("meditationHistory", JSON.stringify(history));
+  }
 
   function getImprovementText(value: number, type: 'percentage' | 'score' = 'percentage') {
     if (Math.abs(value) < 0.1) return { text: "Stable", icon: "➖" };

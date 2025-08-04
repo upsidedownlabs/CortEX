@@ -641,8 +641,8 @@ const averageBPM = Math.round(avg(bpmValues));
             text-sm sm:text-xs md:text-sm lg:text-base xl:text-lg
             rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform
             shadow-sm ${darkMode ? "bg-amber-300 text-zinc-800/90" : "bg-amber-600 text-white/90"}
-            ${buttonbg} cursor-pointer hover:scale-105 hover:shadow-lg active:scale-95
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500`}
+            ${buttonbg} cursor-pointer  active:scale-95
+            `}
                             >
                                 <span className="relative z-10 truncate font-medium">View Results</span>
                             </button>
@@ -652,9 +652,9 @@ const averageBPM = Math.round(avg(bpmValues));
                                 className={`w-full sm:min-w-[130px] sm:max-w-[180px] sm:w-auto px-4 py-3 sm:px-5 sm:py-2.5 md:px-6 md:py-3 lg:px-8 lg:py-4
             text-sm sm:text-xs md:text-sm lg:text-base xl:text-lg
             rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform
-            shadow-sm cursor-pointer hover:scale-105 hover:shadow-lg active:scale-95
+            shadow-sm cursor-pointer active:scale-95
             ${darkMode ? "bg-emerald-500 text-zinc-800/90" : "bg-emerald-600 text-white/90"}
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500`}
+            `}
                             >
                                
                                     
