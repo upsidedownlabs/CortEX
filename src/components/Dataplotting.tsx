@@ -69,6 +69,8 @@ export default function SignalVisualizer() {
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
+         averageHRV: number;    // ✅ new
+        averageBPM: number;    // ✅ new
     } | null>(null);
     // 1) Create refs for each display element
     const currentRef = useRef<HTMLDivElement>(null);
@@ -93,6 +95,8 @@ export default function SignalVisualizer() {
     const [viewMode, setViewMode] = useState<"radar" | "meditation">("radar");
     const [selectedGoal, setSelectedGoal] = useState<"anxiety" | "meditation" | "sleep">("anxiety");
     const [showResults, setShowResults] = useState(false);
+const lastBPMRef = useRef<number | null>(null);
+const lastHRVRef = useRef<number | null>(null);
 
     const selectedGoalRef = useRef(selectedGoal);
 
@@ -216,6 +220,8 @@ export default function SignalVisualizer() {
                 theta: (smooth0.theta + smooth1.theta) / 2,
                 delta: (smooth0.delta + smooth1.delta) / 2,
                 symmetry: Math.abs(smooth0.alpha - smooth1.alpha),
+                 bpm: lastBPMRef.current ?? null,
+    hrv: lastHRVRef.current ?? null,
             };
 
             // ✅ Only record data if meditating
@@ -343,6 +349,9 @@ export default function SignalVisualizer() {
                 connectionStartRef.current = now;
                 lastStateUpdateRef.current = now;
             }
+
+            if (bpm !== null) lastBPMRef.current = bpm;
+if (hrv !== null) lastHRVRef.current = hrv;
 
             // Add current state to window
             stateWindowRef.current.push({
@@ -664,6 +673,25 @@ export default function SignalVisualizer() {
                                                                             ))}
                                                                         </div>
                                                                     </div>
+<div className="grid grid-cols-2 gap-2">
+  <div className="p-3 rounded-xl bg-pink-100 dark:bg-pink-900/20 border border-pink-300 dark:border-pink-800 text-center">
+    <div className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase mb-2">
+      Average HRV
+    </div>
+    <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
+      {results.averageHRV ?? "--"} ms
+    </div>
+  </div>
+
+  <div className="p-3 rounded-xl bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 text-center">
+    <div className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase mb-2">
+      Average BPM
+    </div>
+    <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
+      {results.averageBPM ?? "--"}
+    </div>
+  </div>
+</div>
 
                                                                     {/* Performance Indicator */}
                                                                     <div className="p-4 text-center rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-800" style={{ padding: '6px' }}>

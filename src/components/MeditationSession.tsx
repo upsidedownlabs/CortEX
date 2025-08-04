@@ -18,7 +18,7 @@ export const MeditationSession = ({
 }: {
     onStartSession: () => void;
     onEndSession: () => void;
-    sessionData: { timestamp: number; alpha: number; beta: number; theta: number; delta: number; symmetry: number }[];
+    sessionData: { timestamp: number; alpha: number; beta: number; theta: number; delta: number; symmetry: number; bpm?: number; hrv?: number }[];
     darkMode: boolean;
     connected: boolean;
     setShowResults: React.Dispatch<React.SetStateAction<boolean>>;
@@ -51,6 +51,8 @@ export const MeditationSession = ({
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
+         averageHRV: number;    // ✅ new
+         averageBPM: number;    // ✅ new
     } | null;
 
     setSessionResults: React.Dispatch<React.SetStateAction<{
@@ -82,6 +84,8 @@ export const MeditationSession = ({
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
+         averageHRV: number;    // ✅ new
+  averageBPM: number;    // ✅ new
     } | null>>;
 
     renderSessionResults?: (results: {
@@ -100,6 +104,8 @@ export const MeditationSession = ({
         focusScore: string;
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
+         averageHRV: number;      // ✅ add this
+  averageBPM: number;      // ✅ and this
     }) => React.ReactNode;
 }) => {
     const [isMeditating, setIsMeditating] = useState(false);
@@ -197,30 +203,42 @@ export const MeditationSession = ({
             0
         );
         const focusScore = ((averages.alpha + averages.theta) / (averages.beta + 0.001)).toFixed(2);
+        
+          const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-        setSessionResults({
-            duration: actualDurationMs / 1000, // Actual duration in seconds
-            averages,
-            mentalState,
-            stateDescription,
-            focusScore,
-            symmetry: averages.symmetry > 0 ? 'Left hemisphere dominant' :
-                averages.symmetry < 0 ? 'Right hemisphere dominant' : 'Balanced',
-            data,
-            dominantBands: {
-                alpha: Math.round(averages.alpha * 1000),
-                beta: Math.round(averages.beta * 1000),
-                theta: Math.round(averages.theta * 1000),
-                delta: Math.round(averages.delta * 1000),
-            },
-            mostFrequent,
-            convert,
-            avgSymmetry: avgSymmetry,
-            formattedDuration: sessionDuration,
-            statePercentages,
-            goodMeditationPct,
-            weightedEEGScore,
-        });
+const bpmValues = data.map(d => d.bpm).filter(n => n !== undefined && n !== null) as number[];
+const hrvValues = data.map(d => d.hrv).filter(n => n !== undefined && n !== null) as number[];
+
+const averageHRV = Math.round(avg(hrvValues));
+const averageBPM = Math.round(avg(bpmValues));
+
+       setSessionResults({
+    duration: actualDurationMs / 1000,
+    averages,
+    mentalState,
+    stateDescription,
+    focusScore,
+    symmetry: averages.symmetry > 0 ? 'Left hemisphere dominant' :
+        averages.symmetry < 0 ? 'Right hemisphere dominant' : 'Balanced',
+    data,
+    dominantBands: {
+        alpha: Math.round(averages.alpha * 1000),
+        beta: Math.round(averages.beta * 1000),
+        theta: Math.round(averages.theta * 1000),
+        delta: Math.round(averages.delta * 1000),
+    },
+    mostFrequent,
+    convert,
+    avgSymmetry,
+    formattedDuration: sessionDuration,
+    statePercentages,
+    goodMeditationPct,
+    weightedEEGScore,
+    averageHRV,        // 👈 newly added
+    averageBPM         // 👈 newly added
+});
+
+
     };
 
     useEffect(() => {
@@ -609,7 +627,9 @@ export const MeditationSession = ({
                                 averages: sessionResults.averages,
                                 focusScore: sessionResults.focusScore,
                                 statePercentages: sessionResults.statePercentages,
-                                goodMeditationPct: sessionResults.goodMeditationPct
+                                goodMeditationPct: sessionResults.goodMeditationPct,
+                                averageHRV: sessionResults.averageHRV,
+                                averageBPM: sessionResults.averageBPM,
                             })}
                         </div>
 

@@ -29,6 +29,8 @@ export type SessionResultsType = {
   statePercentages: Record<string, string>;
   goodMeditationPct: string;
   weightedEEGScore: number;
+  averageHRV: number;    // ✅ new
+  averageBPM: number;    // ✅ new
 };
 
 export const exportToPDF = (filename: string, sessionResults: SessionResultsType) => {
@@ -320,6 +322,13 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.text(`Focus Score: ${sessionResults.focusScore}`, 20, yPos);
   yPos += 7;
   doc.text(`Meditation Quality: ${sessionResults.goodMeditationPct}%`, 20, yPos);
+  yPos += 7;
+  
+  // Add HRV and BPM information to Session Overview
+  doc.text(`Average HRV: ${sessionResults.averageHRV ?? '--'} ms`, 20, yPos);
+  yPos += 7;
+  doc.text(`Average BPM: ${sessionResults.averageBPM ?? '--'}`, 20, yPos);
+  
   yPos += 15;
 
   // --- Recent Progress Trends ---
