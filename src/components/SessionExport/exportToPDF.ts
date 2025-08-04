@@ -256,7 +256,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     doc.setFontSize(11);
     doc.setTextColor(46, 204, 113);
     const streakText = progressStats ? ` - ${progressStats.currentStreak} day streak!` : '';
-    doc.text(`Session #${historyData.length}${streakText}`, pageWidth / 2, 45, { align: "center" });
+   
   }
 
   let yPos = 60;
@@ -313,7 +313,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   yPos += 7;
   doc.text(`Duration: ${sessionResults.formattedDuration}`, 20, yPos);
   yPos += 7;
-  const mentalStateText = `Mental State: ${sessionResults.mentalState})`;
+  const mentalStateText = `Mental State: ${sessionResults.mentalState}`;
   const wrappedMentalState = doc.splitTextToSize(mentalStateText, pageWidth - 40);
   doc.text(wrappedMentalState, 20, yPos);
   yPos += wrappedMentalState.length * 6;

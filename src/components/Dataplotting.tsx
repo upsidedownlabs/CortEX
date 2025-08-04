@@ -502,11 +502,11 @@ export default function SignalVisualizer() {
                                 <button
                                     onClick={connected ? disconnect : connect}
                                     className={`min-w-[120px] max-w-[160px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
-                             rounded-xl font-semibold transition-all duration-300  flex items-center justify-center gap-2 
+                             rounded-md font-semibold transition-all duration-300  flex items-center justify-center gap-2 
                              whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 cursor-pointer
                              ${darkMode
                                             ? "bg-amber-300  text-zinc-800/90  "
-                                            : "bg-amber-600  text-zinc-800/90  "
+                                            : "bg-amber-600  text-white/90"  
                                         }
                              `}
                                 >
@@ -548,8 +548,9 @@ export default function SignalVisualizer() {
                                                 <button
                                                     onClick={() => setSessionResults(null)}
                                                     className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
-                            rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105
-                            text-black cursor-pointer
+                            rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105
+                            ${darkMode ? "bg-amber-300  text-zinc-800/90  "
+                                        : "bg-amber-600  text-white/90"}  "}  cursor-pointer
                                  ${buttonbg}`}
                                                     style={{ padding: "0.3rem" }}
                                                 >
