@@ -116,10 +116,14 @@ export const MeditationSession = ({
     const buttonbg = darkMode ? "bg-amber-300" : "bg-amber-600";
     const durationbtnBg = darkMode ? "bg-zinc-700/50" : "bg-stone-100/80";
 
+    // Add this ref at the top with other refs
+const sessionSavedRef = useRef<boolean>(false);
+
     const startMeditation = () => {
         setIsMeditating(true);
         setTimeLeft(duration * 60);
         sessionStartTime.current = Date.now();
+        sessionSavedRef.current = false; // Reset the flag for new session
         onStartSession();
     };
 
@@ -135,6 +139,12 @@ export const MeditationSession = ({
 
     const analyzeSession = (data: typeof sessionData) => {
         if (!data.length) return;
+        
+        // Prevent duplicate analysis
+        if (sessionResults) {
+            console.log('Session already analyzed, skipping');
+            return;
+        }
 
         // Calculate actual session duration based on elapsed time
         const actualDurationMs = sessionStartTime.current ? Date.now() - sessionStartTime.current : 0;
@@ -234,8 +244,8 @@ const averageBPM = Math.round(avg(bpmValues));
     statePercentages,
     goodMeditationPct,
     weightedEEGScore,
-    averageHRV,        // 👈 newly added
-    averageBPM         // 👈 newly added
+    averageHRV,
+    averageBPM
 });
 
 
@@ -362,7 +372,10 @@ const averageBPM = Math.round(avg(bpmValues));
 
     const downloadPDF = (filename: string) => {
         if (!sessionResults) return;
-        exportToPDF(filename, sessionResults);
+        
+        // Create a deep copy to prevent any reference issues
+        const sessionResultsCopy = JSON.parse(JSON.stringify(sessionResults));
+        exportToPDF(filename, sessionResultsCopy);
     };
 
     // Add this ref to manage data collection interval
@@ -385,27 +398,66 @@ const averageBPM = Math.round(avg(bpmValues));
         return `${minutes}m${seconds > 0 ? ` ${seconds}s` : ''}`;
     };
 
-    // Add useEffect to save session history after each session
+    // Modified useEffect to prevent duplicate saves with additional safeguards
     useEffect(() => {
-        if (sessionResults) {
+        if (sessionResults && !sessionSavedRef.current) {
             const historyKey = "meditationHistory";
             const previousData = JSON.parse(localStorage.getItem(historyKey) || "[]");
-
-            const newEntry = {
-                ...sessionResults,
-                timestamp: Date.now(),
+            
+            // Create a unique session ID based on timestamp and session start time
+            const sessionId = `session_${sessionStartTime.current}_${Math.round(sessionResults.duration)}`;
+            
+            // Check if this exact session already exists
+            const existingSession = previousData.find((session: any) => 
+                session.sessionId === sessionId ||
+                (session.timestamp === Date.now() && 
+                 session.formattedDuration === sessionResults.formattedDuration &&
+                 session.goodMeditationPct === sessionResults.goodMeditationPct)
+            );
+            
+            if (existingSession) {
+                console.log('Session already saved, skipping duplicate save');
+                sessionSavedRef.current = true;
+                return;
+            }
+            
+            sessionSavedRef.current = true; // Mark as saved BEFORE the save operation
+            
+            const lightweightEntry = {
                 sessionDate: new Date().toISOString().split('T')[0],
                 sessionTime: new Date().toLocaleTimeString(),
-                sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                sessionId: sessionId,
+                timestamp: Date.now(),
+                
+                formattedDuration: sessionResults.formattedDuration,
+                goodMeditationPct: sessionResults.goodMeditationPct,
+                focusScore: sessionResults.focusScore,
+                mentalState: sessionResults.mentalState,
+                averages: {
+                    alpha: sessionResults.averages.alpha,
+                    beta: sessionResults.averages.beta,
+                    theta: sessionResults.averages.theta,
+                    delta: sessionResults.averages.delta,
+                    symmetry: sessionResults.averages.symmetry
+                },
+                averageHRV: sessionResults.averageHRV,
+                averageBPM: sessionResults.averageBPM
             };
 
-            // Keep only last 5 sessions to prevent excessive storage
-            const updatedHistory = [...previousData, newEntry].slice(-5);
+            const updatedHistory = [...previousData, lightweightEntry].slice(-5);
 
-            // Save updated history
-            localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
-
-            console.log(`Session saved! Total sessions: ${updatedHistory.length}`);
+            try {
+                localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
+                console.log(`Lightweight session saved! Total sessions: ${updatedHistory.length}`);
+                console.log('Storage size:', JSON.stringify(updatedHistory).length, 'characters');
+            } catch (e) {
+                console.error('Storage failed:', e);
+                try {
+                    localStorage.setItem(historyKey, JSON.stringify([lightweightEntry]));
+                } catch (e2) {
+                    console.error('Critical storage failure:', e2);
+                }
+            }
         }
     }, [sessionResults]);
 

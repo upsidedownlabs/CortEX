@@ -558,58 +558,9 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
 
   doc.save(`${filename}.pdf`);
 
-  // Fix the localStorage overload issue - store only essential data
-  try {
-    const history = JSON.parse(localStorage.getItem("meditationHistory") || "[]");
-    
-    // Create a lightweight version of session results for storage
-    const lightweightSession = {
-      sessionDate: new Date().toISOString().split('T')[0],
-      formattedDuration: sessionResults.formattedDuration,
-      goodMeditationPct: sessionResults.goodMeditationPct,
-      focusScore: sessionResults.focusScore,
-      mentalState: sessionResults.mentalState,
-      averages: sessionResults.averages,
-      averageHRV: sessionResults.averageHRV,
-      averageBPM: sessionResults.averageBPM,
-      // Don't store the full data array - it's too large
-      timestamp: Date.now() // For fallback date calculation
-    };
-    
-    // Keep only last 4, add new one = total of 5 max
-    const trimmedHistory = history.slice(-4);
-    trimmedHistory.push(lightweightSession);
-    
-    // Update sessionDate for existing records if missing
-    trimmedHistory.forEach((s: any) => {
-      if (!s.sessionDate && s.timestamp) {
-        const d = new Date(s.timestamp);
-        s.sessionDate = d.toISOString().split('T')[0];
-      }
-    });
-    
-    localStorage.setItem("meditationHistory", JSON.stringify(trimmedHistory));
-  } catch (e) {
-    console.error("Error saving session data:", e);
-    // If still failing, clear old data and try with just the current session
-    try {
-      const lightweightSession = {
-        sessionDate: new Date().toISOString().split('T')[0],
-        formattedDuration: sessionResults.formattedDuration,
-        goodMeditationPct: sessionResults.goodMeditationPct,
-        focusScore: sessionResults.focusScore,
-        mentalState: sessionResults.mentalState,
-        averages: sessionResults.averages,
-        averageHRV: sessionResults.averageHRV,
-        averageBPM: sessionResults.averageBPM,
-        timestamp: Date.now()
-      };
-      localStorage.setItem("meditationHistory", JSON.stringify([lightweightSession]));
-    } catch (e2) {
-      console.error("Critical storage error:", e2);
-      alert("Storage full. Please clear browser data or use a different device.");
-    }
-  }
+  // ❌ REMOVE ALL THIS CODE - DON'T SAVE TO LOCALSTORAGE FROM PDF EXPORT
+  // The session should already be saved in MeditationSession.tsx
+  console.log("PDF exported successfully");
 
   function getImprovementText(value: number, type: 'percentage' | 'score' = 'percentage') {
     if (Math.abs(value) < 0.1) return { text: "Stable", icon: "➖" };
