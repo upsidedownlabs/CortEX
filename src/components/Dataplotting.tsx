@@ -69,7 +69,7 @@ export default function SignalVisualizer() {
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
-         averageHRV: number;    // ✅ new
+        averageHRV: number;    // ✅ new
         averageBPM: number;    // ✅ new
     } | null>(null);
     // 1) Create refs for each display element
@@ -95,8 +95,8 @@ export default function SignalVisualizer() {
     const [viewMode, setViewMode] = useState<"radar" | "meditation">("radar");
     const [selectedGoal, setSelectedGoal] = useState<"anxiety" | "meditation" | "sleep">("anxiety");
     const [showResults, setShowResults] = useState(false);
-const lastBPMRef = useRef<number | null>(null);
-const lastHRVRef = useRef<number | null>(null);
+    const lastBPMRef = useRef<number | null>(null);
+    const lastHRVRef = useRef<number | null>(null);
 
     const selectedGoalRef = useRef(selectedGoal);
 
@@ -220,8 +220,8 @@ const lastHRVRef = useRef<number | null>(null);
                 theta: (smooth0.theta + smooth1.theta) / 2,
                 delta: (smooth0.delta + smooth1.delta) / 2,
                 symmetry: Math.abs(smooth0.alpha - smooth1.alpha),
-                 bpm: lastBPMRef.current ?? null,
-    hrv: lastHRVRef.current ?? null,
+                bpm: lastBPMRef.current ?? null,
+                hrv: lastHRVRef.current ?? null,
             };
 
             // ✅ Only record data if meditating
@@ -351,7 +351,7 @@ const lastHRVRef = useRef<number | null>(null);
             }
 
             if (bpm !== null) lastBPMRef.current = bpm;
-if (hrv !== null) lastHRVRef.current = hrv;
+            if (hrv !== null) lastHRVRef.current = hrv;
 
             // Add current state to window
             stateWindowRef.current.push({
@@ -515,7 +515,7 @@ if (hrv !== null) lastHRVRef.current = hrv;
                              whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 cursor-pointer
                              ${darkMode
                                             ? "bg-amber-300  text-zinc-800/90  "
-                                            : "bg-amber-600  text-white/90"  
+                                            : "bg-amber-600  text-white/90"
                                         }
                              `}
                                 >
@@ -559,7 +559,7 @@ if (hrv !== null) lastHRVRef.current = hrv;
                                                     className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
                             rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105
                             ${darkMode ? "bg-amber-300  text-zinc-800/90  "
-                                        : "bg-amber-600  text-white/90"}  "}  cursor-pointer
+                                                            : "bg-amber-600  text-white/90"}  "}  cursor-pointer
                                  ${buttonbg}`}
                                                     style={{ padding: "0.3rem" }}
                                                 >
@@ -673,25 +673,25 @@ if (hrv !== null) lastHRVRef.current = hrv;
                                                                             ))}
                                                                         </div>
                                                                     </div>
-<div className="grid grid-cols-2 gap-2">
-  <div className="p-3 rounded-xl bg-pink-100 dark:bg-pink-900/20 border border-pink-300 dark:border-pink-800 text-center">
-    <div className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase mb-2">
-      Average HRV
-    </div>
-    <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
-      {results.averageHRV ?? "--"} ms
-    </div>
-  </div>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        <div className="p-3 rounded-xl bg-pink-100 dark:bg-pink-900/20 border border-pink-300 dark:border-pink-800 text-center">
+                                                                            <div className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase mb-2">
+                                                                                Average HRV
+                                                                            </div>
+                                                                            <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                                                {results.averageHRV ?? "--"} ms
+                                                                            </div>
+                                                                        </div>
 
-  <div className="p-3 rounded-xl bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 text-center">
-    <div className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase mb-2">
-      Average BPM
-    </div>
-    <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
-      {results.averageBPM ?? "--"}
-    </div>
-  </div>
-</div>
+                                                                        <div className="p-3 rounded-xl bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 text-center">
+                                                                            <div className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase mb-2">
+                                                                                Average BPM
+                                                                            </div>
+                                                                            <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                                                {results.averageBPM ?? "--"}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
 
                                                                     {/* Performance Indicator */}
                                                                     <div className="p-4 text-center rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-800" style={{ padding: '6px' }}>
@@ -1102,11 +1102,10 @@ if (hrv !== null) lastHRVRef.current = hrv;
                                         </span>
                                     </div>
                                 </div>
-                                <div className={`flex flex-col items-center ${
-                                    darkMode? "bg-zinc-700" : "bg-stone-200"
-                                } rounded-lg`} style={{ padding: '0.2rem ' }}>
+                                <div className={`flex flex-col items-center ${darkMode ? "bg-zinc-700" : "bg-stone-200"
+                                    } rounded-lg`} style={{ padding: '0.2rem ' }}>
                                     <span className={`text-xs ${primaryAccent} mb-1`} style={{ fontSize: '16px' }}>
-                                      State
+                                        State
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <div className="flex items-center" style={{ transform: 'scale(0.8)' }}>
@@ -1136,8 +1135,8 @@ if (hrv !== null) lastHRVRef.current = hrv;
                 style={{ paddingLeft: '0.3125rem', paddingRight: '0.3125rem' }}>
                 <div className="w-full h-full flex flex-col sm:flex-row justify-between items-center" style={{ paddingLeft: '1.25rem', paddingRight: '1.25rem' }}>
                     <div className={`${textSecondary} text-xs sm:text-sm md:text-base mb-1 sm:mb-0`}>
-                        <span className="font-medium">CortEX</span> | &copy; {new Date().getFullYear()}{" "}  
-                           <Link href="https://upsidedownlabs.tech/" target="_blank">
+                        <span className="font-medium">CortEX</span> | &copy; {new Date().getFullYear()}{" "}
+                        <Link href="https://upsidedownlabs.tech/" target="_blank">
                             Upside Down Labs
                         </Link>
                     </div>

@@ -51,8 +51,8 @@ export const MeditationSession = ({
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
-         averageHRV: number;    // ✅ new
-         averageBPM: number;    // ✅ new
+        averageHRV: number;    // ✅ new
+        averageBPM: number;    // ✅ new
     } | null;
 
     setSessionResults: React.Dispatch<React.SetStateAction<{
@@ -84,8 +84,8 @@ export const MeditationSession = ({
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
-         averageHRV: number;    // ✅ new
-  averageBPM: number;    // ✅ new
+        averageHRV: number;    // ✅ new
+        averageBPM: number;    // ✅ new
     } | null>>;
 
     renderSessionResults?: (results: {
@@ -104,8 +104,8 @@ export const MeditationSession = ({
         focusScore: string;
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
-         averageHRV: number;      // ✅ add this
-  averageBPM: number;      // ✅ and this
+        averageHRV: number;      // ✅ add this
+        averageBPM: number;      // ✅ and this
     }) => React.ReactNode;
 }) => {
     const [isMeditating, setIsMeditating] = useState(false);
@@ -117,7 +117,7 @@ export const MeditationSession = ({
     const durationbtnBg = darkMode ? "bg-zinc-700/50" : "bg-stone-100/80";
 
     // Add this ref at the top with other refs
-const sessionSavedRef = useRef<boolean>(false);
+    const sessionSavedRef = useRef<boolean>(false);
 
     const startMeditation = () => {
         setIsMeditating(true);
@@ -139,7 +139,7 @@ const sessionSavedRef = useRef<boolean>(false);
 
     const analyzeSession = (data: typeof sessionData) => {
         if (!data.length) return;
-        
+
         // Prevent duplicate analysis
         if (sessionResults) {
             console.log('Session already analyzed, skipping');
@@ -178,25 +178,65 @@ const sessionSavedRef = useRef<boolean>(false);
             ((averages.alpha + averages.theta) / totalPower) * 100
         ).toFixed(1);
 
-        const mostFrequent = Object.entries(averages)
-            .filter(([key]) => key !== "symmetry")
-            .sort((a, b) => b[1] - a[1])[0][0];
-
+        // Enhanced mental state determination with multiple criteria
         let mentalState = '';
         let stateDescription = '';
 
-        if (mostFrequent === 'alpha') {
-            mentalState = 'Relaxed';
-            stateDescription = 'Your mind was in a calm and relaxed state, ideal for meditation.';
-        } else if (mostFrequent === 'beta') {
-            mentalState = 'Focused';
-            stateDescription = 'Your mind was in an active, alert state with high cognitive engagement. This is natural for beginners. For deeper meditation, try gently directing attention to your breath without forcing changes.';
-        } else if (mostFrequent === 'theta') {
-            mentalState = 'Meditation';
-            stateDescription = 'You entered a deeply meditative state—excellent work.';
-        } else if (mostFrequent === 'delta') {
+        // Calculate percentages for decision making
+        const alphaPercent = (averages.alpha / totalPower) * 100;
+        const betaPercent = (averages.beta / totalPower) * 100;
+        const thetaPercent = (averages.theta / totalPower) * 100;
+        const deltaPercent = (averages.delta / totalPower) * 100;
+
+        // More nuanced state determination
+        if (deltaPercent > 40) {
             mentalState = 'Drowsy';
-            stateDescription = 'Your brain was in a very slow-wave state, indicating deep rest or sleepiness.';
+            stateDescription = 'Your brain was in a very slow-wave state, indicating deep rest or sleepiness. Consider meditating when more alert.';
+        } else if (thetaPercent > 35 && alphaPercent > 25) {
+            mentalState = 'Deep Meditation';
+            stateDescription = 'You achieved a profound meditative state with strong theta and alpha waves—excellent work.';
+        } else if (thetaPercent > 30) {
+            mentalState = 'Meditative';
+            stateDescription = 'You entered a meditative state with good theta wave activity. This indicates deep focus and inner awareness.';
+        } else if (alphaPercent > 35) {
+            mentalState = 'Relaxed';
+            stateDescription = 'Your mind was in a calm and relaxed state, ideal for stress relief and peaceful meditation.';
+        } else if (alphaPercent > 25 && betaPercent < 40) {
+            mentalState = 'Relaxed Focus';
+            stateDescription = 'You maintained a balanced state of relaxed alertness—perfect for mindful meditation.';
+        } else if (betaPercent > 45) {
+            mentalState = 'Highly Focused';
+            stateDescription = 'Your mind was very active and alert. While this shows engagement, try to gently soften your focus for deeper meditation.';
+        } else if (betaPercent > 35) {
+            mentalState = 'Focused';
+            stateDescription = 'Your mind was in an active, alert state. This is natural for beginners—try directing attention to your breath.';
+        } else {
+            // Fallback based on dominant wave
+            const mostFrequent = Object.entries(averages)
+                .filter(([key]) => key !== "symmetry")
+                .sort((a, b) => b[1] - a[1])[0][0];
+            
+            switch (mostFrequent) {
+                case 'alpha':
+                    mentalState = 'Relaxed';
+                    stateDescription = 'Your mind was in a calm and relaxed state, ideal for meditation.';
+                    break;
+                case 'beta':
+                    mentalState = 'Focused';
+                    stateDescription = 'Your mind was active and alert—try to soften your focus for deeper states.';
+                    break;
+                case 'theta':
+                    mentalState = 'Meditative';
+                    stateDescription = 'You entered a meditative state—great progress.';
+                    break;
+                case 'delta':
+                    mentalState = 'Drowsy';
+                    stateDescription = 'Your brain was in a slow-wave state, indicating deep rest.';
+                    break;
+                default:
+                    mentalState = 'Balanced';
+                    stateDescription = 'You maintained a balanced mental state throughout the session.';
+            }
         }
 
         const EEG_WEIGHTS: Record<string, Partial<Record<'alpha' | 'theta' | 'beta' | 'delta', number>>> = {
@@ -213,40 +253,45 @@ const sessionSavedRef = useRef<boolean>(false);
             0
         );
         const focusScore = ((averages.alpha + averages.theta) / (averages.beta + 0.001)).toFixed(2);
-        
-          const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-const bpmValues = data.map(d => d.bpm).filter(n => n !== undefined && n !== null) as number[];
-const hrvValues = data.map(d => d.hrv).filter(n => n !== undefined && n !== null) as number[];
+        const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-const averageHRV = Math.round(avg(hrvValues));
-const averageBPM = Math.round(avg(bpmValues));
+        const bpmValues = data.map(d => d.bpm).filter(n => n !== undefined && n !== null) as number[];
+        const hrvValues = data.map(d => d.hrv).filter(n => n !== undefined && n !== null) as number[];
 
-       setSessionResults({
-    duration: actualDurationMs / 1000,
-    averages,
-    mentalState,
-    stateDescription,
-    focusScore,
-    symmetry: averages.symmetry > 0 ? 'Left hemisphere dominant' :
-        averages.symmetry < 0 ? 'Right hemisphere dominant' : 'Balanced',
-    data,
-    dominantBands: {
-        alpha: Math.round(averages.alpha * 1000),
-        beta: Math.round(averages.beta * 1000),
-        theta: Math.round(averages.theta * 1000),
-        delta: Math.round(averages.delta * 1000),
-    },
-    mostFrequent,
-    convert,
-    avgSymmetry,
-    formattedDuration: sessionDuration,
-    statePercentages,
-    goodMeditationPct,
-    weightedEEGScore,
-    averageHRV,
-    averageBPM
-});
+        const averageHRV = Math.round(avg(hrvValues));
+        const averageBPM = Math.round(avg(bpmValues));
+
+        // Get the most frequent state for compatibility
+        const mostFrequent = Object.entries(averages)
+            .filter(([key]) => key !== "symmetry")
+            .sort((a, b) => b[1] - a[1])[0][0];
+
+        setSessionResults({
+            duration: actualDurationMs / 1000,
+            averages,
+            mentalState,
+            stateDescription,
+            focusScore,
+            symmetry: averages.symmetry > 0 ? 'Left hemisphere dominant' :
+                averages.symmetry < 0 ? 'Right hemisphere dominant' : 'Balanced',
+            data,
+            dominantBands: {
+                alpha: Math.round(averages.alpha * 1000),
+                beta: Math.round(averages.beta * 1000),
+                theta: Math.round(averages.theta * 1000),
+                delta: Math.round(averages.delta * 1000),
+            },
+            mostFrequent,
+            convert,
+            avgSymmetry,
+            formattedDuration: sessionDuration,
+            statePercentages,
+            goodMeditationPct,
+            weightedEEGScore,
+            averageHRV,
+            averageBPM
+        });
 
 
     };
@@ -372,7 +417,7 @@ const averageBPM = Math.round(avg(bpmValues));
 
     const downloadPDF = (filename: string) => {
         if (!sessionResults) return;
-        
+
         // Create a deep copy to prevent any reference issues
         const sessionResultsCopy = JSON.parse(JSON.stringify(sessionResults));
         exportToPDF(filename, sessionResultsCopy);
@@ -403,32 +448,32 @@ const averageBPM = Math.round(avg(bpmValues));
         if (sessionResults && !sessionSavedRef.current) {
             const historyKey = "meditationHistory";
             const previousData = JSON.parse(localStorage.getItem(historyKey) || "[]");
-            
+
             // Create a unique session ID based on timestamp and session start time
             const sessionId = `session_${sessionStartTime.current}_${Math.round(sessionResults.duration)}`;
-            
+
             // Check if this exact session already exists
-            const existingSession = previousData.find((session: any) => 
+            const existingSession = previousData.find((session: any) =>
                 session.sessionId === sessionId ||
-                (session.timestamp === Date.now() && 
-                 session.formattedDuration === sessionResults.formattedDuration &&
-                 session.goodMeditationPct === sessionResults.goodMeditationPct)
+                (session.timestamp === Date.now() &&
+                    session.formattedDuration === sessionResults.formattedDuration &&
+                    session.goodMeditationPct === sessionResults.goodMeditationPct)
             );
-            
+
             if (existingSession) {
                 console.log('Session already saved, skipping duplicate save');
                 sessionSavedRef.current = true;
                 return;
             }
-            
+
             sessionSavedRef.current = true; // Mark as saved BEFORE the save operation
-            
+
             const lightweightEntry = {
                 sessionDate: new Date().toISOString().split('T')[0],
                 sessionTime: new Date().toLocaleTimeString(),
                 sessionId: sessionId,
                 timestamp: Date.now(),
-                
+
                 formattedDuration: sessionResults.formattedDuration,
                 goodMeditationPct: sessionResults.goodMeditationPct,
                 focusScore: sessionResults.focusScore,
@@ -708,8 +753,8 @@ const averageBPM = Math.round(avg(bpmValues));
             ${darkMode ? "bg-emerald-500 text-zinc-800/90" : "bg-emerald-600 text-white/90"}
             `}
                             >
-                               
-                                    
+
+
                                 <span className="relative z-10 truncate font-medium">Download PDF</span>
                             </button>
                         </div>

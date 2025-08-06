@@ -141,15 +141,18 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   };
 
   const drawProgressIndicator = (x: number, y: number, width: number, percentage: number, color: [number, number, number]) => {
-    const height = 8;
+    const height = 6; // Reduced height
+    // Draw background
     doc.setFillColor(240, 240, 240);
     doc.rect(x, y, width, height, 'F');
+    // Draw progress
     const fillWidth = (percentage / 100) * width;
     doc.setFillColor(color[0], color[1], color[2]);
     doc.rect(x, y, fillWidth, height, 'F');
-    doc.setTextColor(60, 60, 60);
-    doc.setFontSize(10);
-    doc.text(`${percentage.toFixed(1)}%`, x + width + 5, y + 6);
+    // Add border
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.rect(x, y, width, height, 'S');
   };
 
   // Get historical data for progress tracking
@@ -259,7 +262,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     doc.setFontSize(11);
     doc.setTextColor(46, 204, 113);
     const streakText = progressStats ? ` - ${progressStats.currentStreak} day streak!` : '';
-   
+
   }
 
   let yPos = 60;
@@ -280,6 +283,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
 
   yPos += 20;
   doc.setFontSize(11);
+  doc.setTextColor(60, 60, 60);
   doc.text(`Duration: ${sessionResults.formattedDuration} | State: ${sessionResults.mentalState} | Focus Score: ${sessionResults.focusScore}`, 20, yPos);
 
   yPos += 25;
@@ -324,12 +328,12 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   yPos += 7;
   doc.text(`Meditation Quality: ${sessionResults.goodMeditationPct}%`, 20, yPos);
   yPos += 7;
-  
+
   // Add HRV and BPM information to Session Overview
   doc.text(`Average HRV: ${sessionResults.averageHRV ?? '--'} ms`, 20, yPos);
   yPos += 7;
   doc.text(`Average BPM: ${sessionResults.averageBPM ?? '--'}`, 20, yPos);
-  
+
   yPos += 15;
 
   // --- Recent Progress Trends ---
@@ -343,22 +347,30 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     yPos += 8;
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
+    const trendsText = "This shows how your recent session compares to your previous session. Positive values indicate improvement.";
+    const wrappedTrends = doc.splitTextToSize(trendsText, pageWidth - 40);
+    doc.text(wrappedTrends, 20, yPos);
+    yPos += wrappedTrends.length * 6;
 
     const meditationImprovement = getImprovementText(trends.goodMeditation);
     const focusImprovement = getImprovementText(trends.focusScore, 'score');
     const alphaImprovement = getImprovementText(trends.alpha * 100);
     const thetaImprovement = getImprovementText(trends.theta * 100);
 
+    // Set consistent styling for trend lines
+    doc.setFontSize(11);
+    doc.setTextColor(60, 60, 60);
+
     const trendLines = [
-      `Meditation: ${meditationImprovement.text}`,
-      `Focus: ${focusImprovement.text}`,
-      `Alpha: ${alphaImprovement.text}`,
-      `Theta: ${thetaImprovement.text}`,
+      `Meditation Quality: ${meditationImprovement.text}`,
+      `Focus Score: ${focusImprovement.text}`,
+      `Alpha Waves: ${alphaImprovement.text}`,
+      `Theta Waves: ${thetaImprovement.text}`,
     ];
 
     trendLines.forEach(line => {
       yPos = checkNewPage(yPos, 8);
-      doc.text(line, 24, yPos);
+      doc.text(line, 20, yPos);
       yPos += 7;
     });
   }
@@ -397,52 +409,199 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.setTextColor(52, 73, 94);
   doc.text("Practice Consistency", 20, yPos);
   yPos += 8;
+
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
-  const consistencyText = "Consistency is key for meditation progress. This shows how many days in a row you've meditated and your total sessions.";
+  const consistencyText = "We track your 5 most recent sessions using a rolling window. When you complete a 6th session, the oldest is automatically replaced. This gives you focused insights into your current meditation habits.";
   const wrappedConsistency = doc.splitTextToSize(consistencyText, pageWidth - 40);
   doc.text(wrappedConsistency, 20, yPos);
   yPos += wrappedConsistency.length * 6;
 
   doc.setFontSize(11);
   doc.setTextColor(60, 60, 60);
-  if (progressStats) {
-    doc.text(`Current Streak: ${progressStats.currentStreak} days`, 20, yPos);
-    yPos += 7;
-    doc.text(`Total Sessions: ${progressStats.totalSessions}`, 20, yPos);
-    yPos += 7;
-  }
 
-  // --- Improvement Explanation ---
-  yPos += 10; // Add margin before heading
-  yPos = checkNewPage(yPos, 20);
-  doc.setFontSize(16);
-  doc.setTextColor(52, 73, 94);
-  doc.text("Improvement Analysis", 20, yPos);
-  yPos += 8;
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  const improvementText = "Here you can see how your recent sessions compare to previous ones. Arrows show if you're improving (up), declining (down), or staying steady.";
-  const wrappedImprovement = doc.splitTextToSize(improvementText, pageWidth - 40);
-  doc.text(wrappedImprovement, 20, yPos);
-  yPos += wrappedImprovement.length * 6;
+  // Calculate accurate streak and statistics for rolling 5 sessions
+  const calculateAccurateStats = () => {
+    if (historyData.length === 0) return null;
 
-  doc.setFontSize(11);
-  doc.setTextColor(60, 60, 60);
-  if (progressStats) {
-    const getTrendText = (current: number, previous: number, label: string) => {
-      const diff = current - previous;
-      if (Math.abs(diff) < 0.5) return `${label}: No significant change compared to previous 5 sessions.`;
-      return diff > 0
-        ? `${label}: Improved by ${Math.abs(diff).toFixed(1)}% compared to previous 5 sessions.`
-        : `${label}: Decreased by ${Math.abs(diff).toFixed(1)}% compared to previous 5 sessions.`;
+    // Working with rolling window of 5 sessions (FIFO approach)
+    const recentSessions = historyData; // Already limited to 5 in localStorage
+
+    // Get unique dates from current sessions and sort them
+    const sessionDates = recentSessions
+      .map((session: any) => {
+        if (session.sessionDate) {
+          return session.sessionDate;
+        } else if (session.timestamp) {
+          return new Date(session.timestamp).toISOString().split('T')[0];
+        }
+        return new Date().toISOString().split('T')[0];
+      })
+      .filter((date: string, index: number, arr: string[]) => arr.indexOf(date) === index) // Remove duplicates
+      .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime()); // Sort newest first
+
+    // Calculate streak from current rolling window
+    let recentStreak = 0;
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    // Check consecutive days in current window
+    if (sessionDates.includes(today)) {
+      recentStreak = 1;
+      let checkDate = new Date(today);
+
+      for (let i = 1; i < sessionDates.length; i++) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+
+        if (sessionDates.includes(checkDateStr)) {
+          recentStreak++;
+        } else {
+          break;
+        }
+      }
+    } else if (sessionDates.includes(yesterday)) {
+      recentStreak = 1;
+      let checkDate = new Date(yesterday);
+
+      for (let i = 1; i < sessionDates.length; i++) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+
+        if (sessionDates.includes(checkDateStr)) {
+          recentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    // Calculate activity in last 7 days from current window
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentActivity = recentSessions.filter((session: any) => {
+      const sessionDate = new Date(session.sessionDate || session.timestamp);
+      return sessionDate >= oneWeekAgo;
+    }).length;
+
+    // Calculate session frequency (sessions per day over the date range)
+    const oldestSession = recentSessions[0];
+    const newestSession = recentSessions[recentSessions.length - 1];
+    let daySpan = 1;
+
+    if (oldestSession && newestSession) {
+      const oldestDate = new Date(oldestSession.sessionDate || oldestSession.timestamp);
+      const newestDate = new Date(newestSession.sessionDate || newestSession.timestamp);
+      daySpan = Math.max(1, Math.ceil((newestDate.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    }
+
+    const frequency = recentSessions.length / daySpan;
+
+    return {
+      totalTrackedSessions: recentSessions.length,
+      maxTrackingSessions: 5,
+      uniqueRecentDays: sessionDates.length,
+      recentStreak,
+      recentActivity,
+      frequency: frequency,
+      daySpan: daySpan,
+      isRollingWindow: recentSessions.length === 5
     };
-    doc.text(getTrendText(progressStats.recentAvg.goodMeditation, progressStats.previousAvg.goodMeditation, "Meditation Quality"), 20, yPos);
-    yPos += 7;
-    doc.text(getTrendText(progressStats.recentAvg.alpha * 100, progressStats.previousAvg.alpha * 100, "Mental Calmness"), 20, yPos);
-    yPos += 7;
+  };
+
+  const accurateStats = calculateAccurateStats();
+
+  if (accurateStats && accurateStats.totalTrackedSessions > 0) {
+    yPos += 5;
+
+    // Sessions in rolling window
+    yPos = checkNewPage(yPos, 20);
+    const windowStatus = accurateStats.isRollingWindow ? "(Rolling Window)" : "(Building History)";
+    doc.text(`Sessions Tracked: ${accurateStats.totalTrackedSessions} of ${accurateStats.maxTrackingSessions} ${windowStatus}`, 20, yPos);
+    yPos += 8;
+
+    if (!accurateStats.isRollingWindow) {
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Complete ${5 - accurateStats.totalTrackedSessions} more sessions to fill the tracking window`, 20, yPos);
+      yPos += 8;
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+    } else {
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Your next session will replace the oldest session in the window`, 20, yPos);
+      yPos += 8;
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+    }
+
+    // Recent streak within current window
+    yPos = checkNewPage(yPos, 15);
+    doc.text(`Current Streak: ${accurateStats.recentStreak} day${accurateStats.recentStreak !== 1 ? 's' : ''}`, 20, yPos);
+    yPos += 8;
+    const streakColor: [number, number, number] = accurateStats.recentStreak >= 3 ? [46, 204, 113] :
+      accurateStats.recentStreak >= 2 ? [241, 196, 15] : [52, 152, 219];
+    const streakPercentage = Math.min((accurateStats.recentStreak / 5) * 100, 100);
+    drawProgressIndicator(20, yPos - 2, 100, streakPercentage, streakColor);
+    yPos += 15;
+
+    // Unique practice days in window
+    yPos = checkNewPage(yPos, 15);
+    doc.text(`Unique Practice Days: ${accurateStats.uniqueRecentDays} of ${accurateStats.totalTrackedSessions}`, 20, yPos);
+    yPos += 8;
+    const uniquePercentage = (accurateStats.uniqueRecentDays / Math.max(accurateStats.totalTrackedSessions, 1)) * 100;
+    const uniqueColor: [number, number, number] = uniquePercentage >= 80 ? [46, 204, 113] :
+      uniquePercentage >= 60 ? [241, 196, 15] : [231, 76, 60];
+    drawProgressIndicator(20, yPos - 2, 100, uniquePercentage, uniqueColor);
+    yPos += 15;
+
+    // Session frequency
+    yPos = checkNewPage(yPos, 16);
+    doc.text(`Session Frequency: ${accurateStats.frequency.toFixed(1)} sessions/day over ${accurateStats.daySpan} days`, 20, yPos);
+    yPos += 8;
+    doc.text(`Recent Activity (7 days): ${accurateStats.recentActivity} sessions`, 20, yPos);
+    yPos += 15;
+
+    // Consistency rating based on rolling window
+    yPos = checkNewPage(yPos, 30);
+  
+
+
+    // Add note about FIFO approach
+    yPos += 5;
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    const fifoNote = accurateStats.isRollingWindow
+      ? "Note: This analysis uses your 5 most recent sessions. Older sessions are automatically archived as you continue practicing."
+      : "Note: Complete more sessions to get fuller consistency insights from your rolling 5-session window.";
+    const wrappedFifo = doc.splitTextToSize(fifoNote, pageWidth - 40);
+    doc.text(wrappedFifo, 20, yPos);
+
+  } else {
+    // First session encouragement
+    yPos += 5;
+    yPos = checkNewPage(yPos, 40);
+    doc.setFontSize(12);
+    doc.setTextColor(46, 204, 113);
+    doc.text("*** Welcome to Your Meditation Journey! ***", 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const welcomeText = "This is your first recorded session! We'll track your next 5 sessions in a rolling window. Each new session will give you better insights into your meditation habits.";
+    const wrappedWelcome = doc.splitTextToSize(welcomeText, pageWidth - 40);
+    doc.text(wrappedWelcome, 20, yPos);
+    yPos += wrappedWelcome.length * 6;
+
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setTextColor(60, 60, 60);
+    doc.text("TIP: Your 5 most recent sessions will always be tracked for focused insights!", 20, yPos);
   }
 
+  yPos += 15; // Add some space before next section
+
+ 
   // --- Recommendations ---
   yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 30);
@@ -481,11 +640,11 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   yPos = checkNewPage(yPos, 30);
   doc.setFontSize(16);
   doc.setTextColor(52, 73, 94);
-  doc.text("Last 5 Session Summary", 20, yPos);
+  doc.text("Last Few Session Summary", 20, yPos);
   yPos += 8;
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
-  const tableText = "This table shows your last five meditation sessions, including the date, meditation quality, focus score, and your main mental state for each session.";
+  const tableText = "This table shows your last few meditation sessions, including the date, meditation quality, score, and your main mental state for each session.";
   const wrappedTable = doc.splitTextToSize(tableText, pageWidth - 40);
   doc.text(wrappedTable, 20, yPos);
   yPos += wrappedTable.length * 6;
@@ -493,10 +652,54 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.setFontSize(10);
   doc.setTextColor(44, 62, 80);
 
+  // Enhanced function to re-analyze mental state from stored averages
+  const reAnalyzeMentalState = (averages: any) => {
+    if (!averages || typeof averages !== 'object') return 'Unknown';
+    
+    const totalPower = averages.alpha + averages.beta + averages.theta + averages.delta;
+    if (totalPower === 0) return 'Unknown';
+    
+    // Calculate percentages for decision making
+    const alphaPercent = (averages.alpha / totalPower) * 100;
+    const betaPercent = (averages.beta / totalPower) * 100;
+    const thetaPercent = (averages.theta / totalPower) * 100;
+    const deltaPercent = (averages.delta / totalPower) * 100;
+
+    // Enhanced mental state determination logic (same as MeditationSession.tsx)
+    if (deltaPercent > 40) {
+      return 'Drowsy';
+    } else if (thetaPercent > 35 && alphaPercent > 25) {
+      return 'Deep Meditation';
+    } else if (thetaPercent > 30) {
+      return 'Meditative';
+    } else if (alphaPercent > 35) {
+      return 'Relaxed';
+    } else if (alphaPercent > 25 && betaPercent < 40) {
+      return 'Relaxed Focus';
+    } else if (betaPercent > 45) {
+      return 'Highly Focused';
+    } else if (betaPercent > 35) {
+      return 'Focused';
+    } else {
+      // Fallback based on dominant wave
+      const dominantWave = (Object.entries(averages) as [string, number][])
+        .filter(([key]) => key !== "symmetry")
+        .sort((a, b) => b[1] - a[1])[0][0];
+      
+      switch (dominantWave) {
+        case 'alpha': return 'Relaxed';
+        case 'beta': return 'Focused';
+        case 'theta': return 'Meditative';
+        case 'delta': return 'Drowsy';
+        default: return 'Balanced';
+      }
+    }
+  };
+
   // Table headers
   const tableX = 20;
-  const colWidths = [30, 30, 35, 35];
-  const headers = ["Date", "Quality", "Focus Score", "State"];
+  const colWidths = [30, 30, 35, 45]; // Made state column wider
+  const headers = ["Date", "Quality", "Score", "State"];
   let colX = tableX;
   headers.forEach((header, i) => {
     doc.text(header, colX + 2, yPos);
@@ -509,25 +712,31 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.setLineWidth(0.5);
   doc.line(tableX, yPos, tableX + colWidths.reduce((a, b) => a + b, 0), yPos);
 
-  // Table rows - Fix missing dates
-  const last5 = historyData.slice(-5).reverse();
+  // Table rows - Enhanced with re-analyzed mental states
+  const last5 = historyData.slice(-5);
   last5.forEach((session: any) => {
     let rowX = tableX;
-    
-    // Ensure session has a date - fix the missing date issue
+
+    // Ensure session has a date
     let sessionDate = "";
     if (session.sessionDate) {
       sessionDate = new Date(session.sessionDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
     } else if (session.timestamp) {
       sessionDate = new Date(session.timestamp).toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
     } else {
-      // Fallback to today's date if no timestamp available
       sessionDate = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
     }
-    
+
     const quality = session.goodMeditationPct ? `${parseFloat(session.goodMeditationPct).toFixed(1)}%` : "";
     const focus = session.focusScore ? Number(session.focusScore).toFixed(2) : "";
-    const state = session.mentalState || "";
+    
+    // Re-analyze mental state from stored averages if available, otherwise use stored state
+    let state = "";
+    if (session.averages && typeof session.averages === 'object') {
+      state = reAnalyzeMentalState(session.averages);
+    } else {
+      state = session.mentalState || "Unknown";
+    }
 
     doc.text(sessionDate, rowX + 2, yPos + 6);
     rowX += colWidths[0];
@@ -535,7 +744,11 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     rowX += colWidths[1];
     doc.text(focus, rowX + 2, yPos + 6);
     rowX += colWidths[2];
-    doc.text(state, rowX + 2, yPos + 6);
+    
+    // Truncate state if too long to fit in column
+    const maxStateLength = 12;
+    const displayState = state.length > maxStateLength ? state.substring(0, maxStateLength - 2) + ".." : state;
+    doc.text(displayState, rowX + 2, yPos + 6);
 
     yPos += 8;
   });
@@ -563,7 +776,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   console.log("PDF exported successfully");
 
   function getImprovementText(value: number, type: 'percentage' | 'score' = 'percentage') {
-    if (Math.abs(value) < 0.1) return { text: "Stable", icon: "➖" };
+    if (Math.abs(value) < 0.1) return { text: "Stable", icon: "=" };
     const isPositive = value > 0;
     const absValue = Math.abs(value);
     const text = type === 'percentage'
@@ -571,7 +784,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
       : `${isPositive ? '+' : '-'}${absValue.toFixed(2)}`;
     return {
       text,
-      icon: isPositive ? "📈" : "📉"
+      icon: isPositive ? "↑" : "↓"
     };
   }
 };
