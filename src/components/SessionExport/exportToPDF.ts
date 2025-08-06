@@ -29,9 +29,9 @@ export type SessionResultsType = {
   statePercentages: Record<string, string>;
   goodMeditationPct: string;
   weightedEEGScore: number;
-  averageHRV: number;    // ✅ new
-  averageBPM: number;    // ✅ new
-  sessionDate?: string;  // ✅ fix: add optional sessionDate
+  averageHRV: number;    
+  averageBPM: number;    
+  sessionDate?: string;  
 };
 
 export const exportToPDF = (filename: string, sessionResults: SessionResultsType) => {
@@ -47,98 +47,6 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     return yPos;
   };
 
-  // Pie chart drawing function
-  const drawPieChart = (
-    x: number,
-    y: number,
-    radius: number,
-    data: Array<{ label: string; value: number; color: [number, number, number] }>
-  ) => {
-    let currentAngle = -Math.PI / 2;
-    const total = data.reduce((sum, item) => sum + item.value, 0);
-
-    data.forEach(item => {
-      const sliceAngle = (item.value / total) * 2 * Math.PI;
-      const startX = x + Math.cos(currentAngle) * radius;
-      const startY = y + Math.sin(currentAngle) * radius;
-      const endX = x + Math.cos(currentAngle + sliceAngle) * radius;
-      const endY = y + Math.sin(currentAngle + sliceAngle) * radius;
-
-      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      // Draw pie slice using lines and ellipse
-      doc.moveTo(x, y);
-      doc.lineTo(startX, startY);
-
-      // Approximate arc with small lines
-      const steps = 30;
-      for (let j = 0; j <= steps; j++) {
-        const angle = currentAngle + (sliceAngle * j) / steps;
-        const arcX = x + Math.cos(angle) * radius;
-        const arcY = y + Math.sin(angle) * radius;
-        doc.lineTo(arcX, arcY);
-      }
-
-      doc.lineTo(x, y);
-      doc.fill();
-
-      currentAngle += sliceAngle;
-    });
-  };
-
-  const drawLineChart = (x: number, y: number, width: number, height: number, data: number[], labels: string[]) => {
-    if (data.length < 2) return;
-
-    const maxValue = Math.max(...data);
-    const minValue = Math.min(...data);
-    const range = maxValue - minValue || 1;
-    const stepX = width / (data.length - 1);
-
-    // Draw grid lines
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.5);
-    for (let i = 0; i <= 4; i++) {
-      const gridY = y + (height / 4) * i;
-      doc.line(x, gridY, x + width, gridY);
-    }
-
-    // Draw the line
-    doc.setDrawColor(52, 152, 219);
-    doc.setLineWidth(2);
-
-    for (let i = 0; i < data.length - 1; i++) {
-      const x1 = x + (i * stepX);
-      const y1 = y + height - ((data[i] - minValue) / range) * height;
-      const x2 = x + ((i + 1) * stepX);
-      const y2 = y + height - ((data[i + 1] - minValue) / range) * height;
-
-      doc.line(x1, y1, x2, y2);
-
-      // Draw data points
-      doc.setFillColor(52, 152, 219);
-      doc.circle(x1, y1, 1.5, 'F');
-    }
-
-    // Draw last point
-    const lastX = x + ((data.length - 1) * stepX);
-    const lastY = y + height - ((data[data.length - 1] - minValue) / range) * height;
-    doc.circle(lastX, lastY, 1.5, 'F');
-
-    // Draw axes
-    doc.setDrawColor(100, 100, 100);
-    doc.setLineWidth(1);
-    doc.line(x, y + height, x + width, y + height); // X-axis
-    doc.line(x, y, x, y + height); // Y-axis
-
-    // Add labels
-    doc.setTextColor(60, 60, 60);
-    doc.setFontSize(8);
-    labels.forEach((label, index) => {
-      if (index % Math.ceil(labels.length / 5) === 0) {
-        const labelX = x + (index * stepX);
-        doc.text(label, labelX, y + height + 10, { align: 'center' });
-      }
-    });
-  };
 
   const drawProgressIndicator = (x: number, y: number, width: number, percentage: number, color: [number, number, number]) => {
     const height = 6; // Reduced height
@@ -243,12 +151,22 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   const progressStats = getProgressStats();
   const progressTrends = getProgressTrends(historyData);
 
+  // ===== STANDARDIZED TEXT SIZES =====
+  const FONT_SIZES = {
+    TITLE: 24,        // Main document title
+    SECTION: 16,      // Section headers
+    SUBSECTION: 14,   // Sub-section headers  
+    BODY: 11,         // Regular body text
+    SMALL: 9,         // Small text, legends, notes
+    TINY: 8           // Very small text, footnotes
+  };
+
   // Header
-  doc.setFontSize(24);
+  doc.setFontSize(FONT_SIZES.TITLE);
   doc.setTextColor(52, 152, 219);
   doc.text("Your Meditation Journey", pageWidth / 2, 25, { align: "center" });
 
-  doc.setFontSize(12);
+  doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(100, 100, 100);
   const dateStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -259,10 +177,9 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   doc.text(dateStr, pageWidth / 2, 35, { align: "center" });
 
   if (historyData.length > 0) {
-    doc.setFontSize(11);
+    doc.setFontSize(FONT_SIZES.BODY);
     doc.setTextColor(46, 204, 113);
     const streakText = progressStats ? ` - ${progressStats.currentStreak} day streak!` : '';
-
   }
 
   let yPos = 60;
@@ -270,19 +187,19 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   // Session Summary Card
   doc.setFillColor(228, 229, 230);
   doc.rect(15, yPos - 5, pageWidth - 30, 55, 'F');
-  doc.setFontSize(18);
+  doc.setFontSize(FONT_SIZES.SUBSECTION);
   doc.setTextColor(44, 62, 80);
   doc.text("Today's Session Summary", 20, yPos + 5);
 
   yPos += 15;
-  doc.setFontSize(12);
+  doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(60, 60, 60);
   doc.text("Meditation Quality:", 20, yPos);
   const quality = parseFloat(sessionResults.goodMeditationPct);
   drawProgressIndicator(20, yPos + 5, 120, quality, [46, 204, 113]);
 
   yPos += 20;
-  doc.setFontSize(11);
+  doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(60, 60, 60);
   doc.text(`Duration: ${sessionResults.formattedDuration} | State: ${sessionResults.mentalState} | Focus Score: ${sessionResults.focusScore}`, 20, yPos);
 
@@ -291,18 +208,18 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   // --- Detailed Session Overview ---
   yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 40);
-  doc.setFontSize(16);
+  doc.setFontSize(FONT_SIZES.SECTION);
   doc.setTextColor(52, 73, 94);
   doc.text("Session Overview", 20, yPos);
   yPos += 8;
-  doc.setFontSize(10);
+  doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(100, 100, 100);
   const overviewText = "This section summarizes when your session happened, how long it lasted, and your overall mental state and focus during meditation.";
   const wrappedOverview = doc.splitTextToSize(overviewText, pageWidth - 40);
   doc.text(wrappedOverview, 20, yPos);
   yPos += wrappedOverview.length * 6;
 
-  doc.setFontSize(11);
+  doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(60, 60, 60);
 
   const sessionStart = sessionResults.data?.[0]?.timestamp
@@ -341,11 +258,11 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   const trends = getProgressTrends(historyData);
   if (trends) {
     yPos = checkNewPage(yPos, 25);
-    doc.setFontSize(16);
+    doc.setFontSize(FONT_SIZES.SECTION);
     doc.setTextColor(52, 73, 94);
     doc.text("Recent Progress Trends", 20, yPos);
     yPos += 8;
-    doc.setFontSize(10);
+    doc.setFontSize(FONT_SIZES.SMALL);
     doc.setTextColor(100, 100, 100);
     const trendsText = "This shows how your recent session compares to your previous session. Positive values indicate improvement.";
     const wrappedTrends = doc.splitTextToSize(trendsText, pageWidth - 40);
@@ -358,7 +275,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     const thetaImprovement = getImprovementText(trends.theta * 100);
 
     // Set consistent styling for trend lines
-    doc.setFontSize(11);
+    doc.setFontSize(FONT_SIZES.BODY);
     doc.setTextColor(60, 60, 60);
 
     const trendLines = [
@@ -375,49 +292,262 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     });
   }
 
-  // --- Session Averages ---
+  // --- Brainwave Analysis ---
   yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 30);
-  doc.setFontSize(16);
+  doc.setFontSize(FONT_SIZES.SECTION);
   doc.setTextColor(52, 73, 94);
-  doc.text("Session Averages", 20, yPos);
+  doc.text("Brainwave Analysis", 20, yPos);
   yPos += 8;
-  doc.setFontSize(10);
+  doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(100, 100, 100);
-  const averagesText = "These are the average levels of different brainwave types detected during your session. Higher Alpha means more relaxation, Beta means focus, Theta means deep meditation, and Delta means drowsiness.";
+  const averagesText = "These measurements show your brain's electrical activity during meditation. Each wave type indicates different mental states:";
   const wrappedAverages = doc.splitTextToSize(averagesText, pageWidth - 40);
   doc.text(wrappedAverages, 20, yPos);
-  yPos += wrappedAverages.length * 6;
+  yPos += wrappedAverages.length * 6 + 5;
 
-  doc.setFontSize(11);
+  // Calculate percentages for better understanding
+  const totalPower = sessionResults.averages.alpha + sessionResults.averages.beta + 
+                     sessionResults.averages.theta + sessionResults.averages.delta;
+
+  const brainwaveData = [
+    {
+      name: "Alpha (Relaxation)",
+      value: sessionResults.averages.alpha,
+      percentage: ((sessionResults.averages.alpha / totalPower) * 100),
+      description: "Calm, relaxed awareness",
+      ideal: "Higher values indicate peaceful, stress-free meditation",
+      color: [46, 204, 113] as [number, number, number]
+    },
+    {
+      name: "Beta (Mental Activity)", 
+      value: sessionResults.averages.beta,
+      percentage: ((sessionResults.averages.beta / totalPower) * 100),
+      description: "Active thinking, alertness",
+      ideal: "Lower values during meditation are better",
+      color: [231, 76, 60] as [number, number, number]
+    },
+    {
+      name: "Theta (Deep Meditation)",
+      value: sessionResults.averages.theta, 
+      percentage: ((sessionResults.averages.theta / totalPower) * 100),
+      description: "Creative insights, deep focus",
+      ideal: "Higher values indicate profound meditative states",
+      color: [142, 68, 173] as [number, number, number]
+    },
+    {
+      name: "Delta (Deep Rest)",
+      value: sessionResults.averages.delta,
+      percentage: ((sessionResults.averages.delta / totalPower) * 100), 
+      description: "Deep sleep, unconscious states",
+      ideal: "Moderate levels are normal, very high suggests drowsiness",
+      color: [52, 152, 219] as [number, number, number]
+    }
+  ];
+
+  // Check if we need a new page for the brainwave section
+  yPos = checkNewPage(yPos, 120);
+
+  // Define layout positions - side by side
+  const leftColumnX = 20;
+  const leftColumnWidth = 110;
+  const rightColumnX = leftColumnX + leftColumnWidth + 10; // 10px gap
+  const pieChartCenterX = rightColumnX + 35;
+  const pieChartCenterY = yPos + 50;
+  const pieChartRadius = 30;
+
+  // Function to draw pie chart (same as before)
+  const drawPieChart = (centerX: number, centerY: number, radius: number, data: any[]) => {
+    let currentAngle = 0;
+    
+    data.forEach((segment, index) => {
+      const angle = (segment.percentage / 100) * 2 * Math.PI;
+      
+      // Set fill color
+      doc.setFillColor(segment.color[0], segment.color[1], segment.color[2]);
+      
+      // Calculate points for the pie slice
+      const startX = centerX + Math.cos(currentAngle) * radius;
+      const startY = centerY + Math.sin(currentAngle) * radius;
+      const endX = centerX + Math.cos(currentAngle + angle) * radius;
+      const endY = centerY + Math.sin(currentAngle + angle) * radius;
+      
+      // Draw the pie slice using triangle approach for better compatibility
+      if (angle > 0.01) { // Only draw if slice is visible
+        // Create path for pie slice
+        const steps = Math.max(3, Math.floor(angle * 20)); // More steps for smoother curves
+        const angleStep = angle / steps;
+        
+        // Start path at center
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(1);
+        
+        // Draw filled polygon for pie slice
+        const points: [number, number][] = [];
+        points.push([centerX, centerY]); // Center point
+        
+        for (let i = 0; i <= steps; i++) {
+          const stepAngle = currentAngle + (i * angleStep);
+          const x = centerX + Math.cos(stepAngle) * radius;
+          const y = centerY + Math.sin(stepAngle) * radius;
+          points.push([x, y]);
+        }
+        
+        // Draw the filled shape
+        doc.setFillColor(segment.color[0], segment.color[1], segment.color[2]);
+        // Use lines to create the pie slice
+        doc.lines(points.slice(1).map((point, i) => {
+          if (i === 0) return [point[0] - centerX, point[1] - centerY];
+          return [point[0] - points[i][0], point[1] - points[i][1]];
+        }), centerX, centerY, [1, 1], 'F');
+        
+        // Draw border
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(1);
+        doc.line(centerX, centerY, startX, startY);
+        doc.line(centerX, centerY, endX, endY);
+      }
+      
+      currentAngle += angle;
+    });
+    
+    // Draw outer circle border
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.circle(centerX, centerY, radius, 'S');
+  };
+
+  // Draw pie chart on the right side
+  drawPieChart(pieChartCenterX, pieChartCenterY, pieChartRadius, brainwaveData);
+
+  // Add chart title above pie chart
+  doc.setFontSize(FONT_SIZES.BODY);
+  doc.setTextColor(44, 62, 80);
+  doc.text("Brainwave Distribution", pieChartCenterX, yPos + 10, { align: "center" });
+
+  // Add legend below the pie chart
+  let legendY = pieChartCenterY + pieChartRadius + 10;
+  doc.setFontSize(FONT_SIZES.SMALL);
+  
+  brainwaveData.forEach((wave, index) => {
+    // Draw color box
+    doc.setFillColor(wave.color[0], wave.color[1], wave.color[2]);
+    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'F');
+    
+    // Draw border around color box
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'S');
+    
+    // Add label
+    doc.setTextColor(60, 60, 60);
+    const waveLabel = wave.name.split(' (')[0];
+    doc.text(`${waveLabel}`, pieChartCenterX - 14, legendY);
+    doc.text(`${wave.percentage.toFixed(1)}%`, pieChartCenterX + 15, legendY);
+    
+    legendY += 8;
+  });
+
+  // Display brainwave data on the left side
+  let leftYPos = yPos + 5; // Reduced from yPos + 15 to yPos + 5
+  
+  brainwaveData.forEach((wave, index) => {
+    // Main wave line: "Alpha (Relaxation): 0.088 (10.3% of total activity)"
+    doc.setFontSize(FONT_SIZES.BODY);
+    doc.setTextColor(44, 62, 80);
+    
+    // Split text if it's too long for the left column
+    const mainText = `${wave.name}: ${wave.value.toFixed(3)} (${wave.percentage.toFixed(1)}% of total activity)`;
+    const wrappedMainText = doc.splitTextToSize(mainText, leftColumnWidth);
+    doc.text(wrappedMainText, leftColumnX, leftYPos);
+    leftYPos += wrappedMainText.length * 6 + 2;
+    
+    // Description bullet point
+    doc.setFontSize(FONT_SIZES.SMALL);
+    doc.setTextColor(80, 80, 80);
+    const descriptionText = `• ${wave.description}`;
+    const wrappedDescription = doc.splitTextToSize(descriptionText, leftColumnWidth);
+    doc.text(wrappedDescription, leftColumnX, leftYPos);
+    leftYPos += wrappedDescription.length * 5 + 1;
+    
+    // Ideal/interpretation bullet point
+    doc.setTextColor(120, 120, 120);
+    const idealText = `• ${wave.ideal}`;
+    const wrappedIdeal = doc.splitTextToSize(idealText, leftColumnWidth);
+    doc.text(wrappedIdeal, leftColumnX, leftYPos);
+    leftYPos += wrappedIdeal.length * 5 + 8; // Extra space between wave types
+  });
+
+  // Update yPos to move past both columns
+  yPos = Math.max(leftYPos, legendY + 10);
+
+  // Overall interpretation
+  yPos += 5;
+  yPos = checkNewPage(yPos, 25);
+  doc.setFontSize(FONT_SIZES.SUBSECTION);
+  doc.setTextColor(52, 73, 94);
+  doc.text("Session Interpretation", 20, yPos);
+  yPos += 10;
+
+  doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(60, 60, 60);
-  doc.text(`Alpha (Relaxation): ${sessionResults.averages.alpha.toFixed(2)}`, 20, yPos);
-  yPos += 7;
-  doc.text(`Beta (Focus): ${sessionResults.averages.beta.toFixed(2)}`, 20, yPos);
-  yPos += 7;
-  doc.text(`Theta (Meditation): ${sessionResults.averages.theta.toFixed(2)}`, 20, yPos);
-  yPos += 7;
-  doc.text(`Delta (Drowsiness): ${sessionResults.averages.delta.toFixed(2)}`, 20, yPos);
-  yPos += 7;
-  doc.text(`Symmetry: ${sessionResults.averages.symmetry.toFixed(2)}`, 20, yPos);
+
+  // Determine dominant wave and provide interpretation
+  const dominantWave = brainwaveData.reduce((prev, current) => 
+    prev.percentage > current.percentage ? prev : current
+  );
+
+  let interpretation = "";
+  if (dominantWave.name.includes("Beta")) {
+    interpretation = `Your mind was quite active during this session (${dominantWave.percentage.toFixed(1)}% Beta waves). This suggests active thinking rather than deep relaxation. Try focusing more on your breath to quiet mental chatter.`;
+  } else if (dominantWave.name.includes("Alpha")) {
+    interpretation = `Excellent! You achieved a relaxed state (${dominantWave.percentage.toFixed(1)}% Alpha waves). This indicates calm, peaceful meditation with reduced stress and anxiety.`;
+  } else if (dominantWave.name.includes("Theta")) {
+    interpretation = `Wonderful! You reached a deep meditative state (${dominantWave.percentage.toFixed(1)}% Theta waves). This suggests profound focus, creativity, and spiritual connection.`;
+  } else if (dominantWave.name.includes("Delta")) {
+    interpretation = `You were very relaxed, possibly drowsy (${dominantWave.percentage.toFixed(1)}% Delta waves). Consider meditating when more alert, or try sitting rather than lying down.`;
+  }
+
+  const wrappedInterpretation = doc.splitTextToSize(interpretation, pageWidth - 40);
+  doc.text(wrappedInterpretation, 20, yPos);
+  yPos += wrappedInterpretation.length * 6 + 5;
+
+  // Symmetry explanation
+  doc.setFontSize(FONT_SIZES.BODY);
+  doc.setTextColor(60, 60, 60);
+  const symmetryValue = sessionResults.averages.symmetry;
+  let symmetryText = "";
+
+  if (Math.abs(symmetryValue) < 0.05) {
+    symmetryText = `Brain Symmetry: Balanced (${symmetryValue.toFixed(3)}) - Your left and right brain hemispheres were working in harmony.`;
+  } else if (symmetryValue > 0.05) {
+    symmetryText = `Brain Symmetry: Left-dominant (${symmetryValue.toFixed(3)}) - Your left hemisphere (logical, analytical) was more active.`;
+  } else {
+    symmetryText = `Brain Symmetry: Right-dominant (${symmetryValue.toFixed(3)}) - Your right hemisphere (creative, intuitive) was more active.`;
+  }
+
+  const wrappedSymmetry = doc.splitTextToSize(symmetryText, pageWidth - 40);
+  doc.text(wrappedSymmetry, 20, yPos);
+  yPos += wrappedSymmetry.length * 6;
+
   yPos += 15;
 
   // --- Streak and Consistency ---
   yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 20);
-  doc.setFontSize(16);
+  doc.setFontSize(FONT_SIZES.SECTION);
   doc.setTextColor(52, 73, 94);
   doc.text("Practice Consistency", 20, yPos);
   yPos += 8;
 
-  doc.setFontSize(10);
+  doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(100, 100, 100);
   const consistencyText = "We track your 5 most recent sessions using a rolling window. When you complete a 6th session, the oldest is automatically replaced. This gives you focused insights into your current meditation habits.";
   const wrappedConsistency = doc.splitTextToSize(consistencyText, pageWidth - 40);
   doc.text(wrappedConsistency, 20, yPos);
   yPos += wrappedConsistency.length * 6;
 
-  doc.setFontSize(11);
+  doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(60, 60, 60);
 
   // Calculate accurate streak and statistics for rolling 5 sessions
@@ -529,7 +659,6 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     } else {
       doc.setFontSize(9);
       doc.setTextColor(150, 150, 150);
-      doc.text(`Your next session will replace the oldest session in the window`, 20, yPos);
       yPos += 8;
       doc.setFontSize(11);
       doc.setTextColor(60, 60, 60);
@@ -565,8 +694,6 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     // Consistency rating based on rolling window
     yPos = checkNewPage(yPos, 30);
   
-
-
     // Add note about FIFO approach
     yPos += 5;
     doc.setFontSize(9);
@@ -605,18 +732,18 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   // --- Recommendations ---
   yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 30);
-  doc.setFontSize(16);
+  doc.setFontSize(FONT_SIZES.SECTION);
   doc.setTextColor(52, 73, 94);
   doc.text("Recommendations", 20, yPos);
   yPos += 8;
-  doc.setFontSize(10);
+  doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(100, 100, 100);
   const recommendationsText = "Based on your results, here are some tips to help you improve your meditation practice.";
   const wrappedRecommendations = doc.splitTextToSize(recommendationsText, pageWidth - 40);
   doc.text(wrappedRecommendations, 20, yPos);
   yPos += wrappedRecommendations.length * 6;
 
-  doc.setFontSize(11);
+  doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(60, 60, 60);
   const recommendations = quality >= 60
     ? [
@@ -635,21 +762,21 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     yPos += 7;
   });
 
-  // --- Last 5 Session Summary Table ---
+  // --- Session Summary Table ---
   yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 30);
-  doc.setFontSize(16);
+  doc.setFontSize(FONT_SIZES.SECTION);
   doc.setTextColor(52, 73, 94);
   doc.text("Last Few Session Summary", 20, yPos);
   yPos += 8;
-  doc.setFontSize(10);
+  doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(100, 100, 100);
   const tableText = "This table shows your last few meditation sessions, including the date, meditation quality, score, and your main mental state for each session.";
   const wrappedTable = doc.splitTextToSize(tableText, pageWidth - 40);
   doc.text(wrappedTable, 20, yPos);
   yPos += wrappedTable.length * 6;
 
-  doc.setFontSize(10);
+  doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(44, 62, 80);
 
   // Enhanced function to re-analyze mental state from stored averages
@@ -753,11 +880,9 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     yPos += 8;
   });
 
-
-
   // --- Footer ---
   const finalYPos = doc.internal.pageSize.getHeight() - 15;
-  doc.setFontSize(10);
+  doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(150, 150, 150);
   doc.text("CortEX Meditation - Personal Meditation Analytics", pageWidth / 2, finalYPos, { align: "center" });
 
@@ -771,7 +896,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
 
   doc.save(`${filename}.pdf`);
 
-  // ❌ REMOVE ALL THIS CODE - DON'T SAVE TO LOCALSTORAGE FROM PDF EXPORT
+  
   // The session should already be saved in MeditationSession.tsx
   console.log("PDF exported successfully");
 

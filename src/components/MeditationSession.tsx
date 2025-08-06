@@ -146,10 +146,11 @@ export const MeditationSession = ({
             return;
         }
 
-        // Calculate actual session duration based on elapsed time
-        const actualDurationMs = sessionStartTime.current ? Date.now() - sessionStartTime.current : 0;
-        const actualDurationMinutes = Math.max(0.1, actualDurationMs / (1000 * 60)); // Minimum 0.1 minutes
-        const sessionDuration = `${actualDurationMinutes.toFixed(1)} min`;
+        // Use the 'duration' state variable as the selected duration in minutes
+        const selectedDurationMinutes = duration;
+        const selectedDurationSeconds = selectedDurationMinutes * 60;
+        const sessionDuration = `${selectedDurationMinutes} min`;
+
 
         const convert = (ticks: number) => ((ticks * 0.5) / 60).toFixed(2);
 
@@ -268,7 +269,7 @@ export const MeditationSession = ({
             .sort((a, b) => b[1] - a[1])[0][0];
 
         setSessionResults({
-            duration: actualDurationMs / 1000,
+            duration: selectedDurationSeconds, // Use selected duration in seconds
             averages,
             mentalState,
             stateDescription,
@@ -285,15 +286,13 @@ export const MeditationSession = ({
             mostFrequent,
             convert,
             avgSymmetry,
-            formattedDuration: sessionDuration,
+            formattedDuration: sessionDuration, // This should now show "1 min", "10 min", etc.
             statePercentages,
             goodMeditationPct,
             weightedEEGScore,
             averageHRV,
             averageBPM
         });
-
-
     };
 
     useEffect(() => {
