@@ -348,13 +348,13 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   // Check if we need a new page for the brainwave section
   yPos = checkNewPage(yPos, 120);
 
-  // Define layout positions - side by side
+  // Define layout positions - side by side (SHIFTED PIE CHART LEFT)
   const leftColumnX = 20;
-  const leftColumnWidth = 110;
-  const rightColumnX = leftColumnX + leftColumnWidth + 10; // 10px gap
-  const pieChartCenterX = rightColumnX + 35;
-  const pieChartCenterY = yPos + 50;
-  const pieChartRadius = 30;
+  const leftColumnWidth = 100;
+  const rightColumnX = leftColumnX + leftColumnWidth + 15; // 15px gap
+  const pieChartCenterX = rightColumnX + 25; // REDUCED from 35 to 25 (moved 10px left)
+  const pieChartCenterY = yPos + 25; // MOVED UP to align with left content
+  const pieChartRadius = 25;
 
   // Function to draw pie chart (same as before)
   const drawPieChart = (centerX: number, centerY: number, radius: number, data: any[]) => {
@@ -417,39 +417,39 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     doc.circle(centerX, centerY, radius, 'S');
   };
 
+  // Add chart title ABOVE pie chart (ALIGNED WITH LEFT CONTENT)
+  doc.setFontSize(FONT_SIZES.BODY);
+  doc.setTextColor(44, 62, 80);
+  
+
   // Draw pie chart on the right side
   drawPieChart(pieChartCenterX, pieChartCenterY, pieChartRadius, brainwaveData);
 
-  // Add chart title above pie chart
-  doc.setFontSize(FONT_SIZES.BODY);
-  doc.setTextColor(44, 62, 80);
-  doc.text("Brainwave Distribution", pieChartCenterX, yPos + 10, { align: "center" });
-
-  // Add legend below the pie chart
-  let legendY = pieChartCenterY + pieChartRadius + 10;
+  // Add legend below the pie chart (CENTERED AND SHIFTED RIGHT)
+  let legendY = pieChartCenterY + pieChartRadius + 8; // Reduced gap
   doc.setFontSize(FONT_SIZES.SMALL);
   
   brainwaveData.forEach((wave, index) => {
-    // Draw color box
+    // Draw color box (SHIFTED RIGHT AND CENTERED)
     doc.setFillColor(wave.color[0], wave.color[1], wave.color[2]);
-    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'F');
+    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'F'); // Changed from -30 to -20
     
     // Draw border around color box
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
-    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'S');
+    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'S'); // Changed from -30 to -20
     
     // Add label
     doc.setTextColor(60, 60, 60);
     const waveLabel = wave.name.split(' (')[0];
-    doc.text(`${waveLabel}`, pieChartCenterX - 14, legendY);
-    doc.text(`${wave.percentage.toFixed(1)}%`, pieChartCenterX + 15, legendY);
+    doc.text(`${waveLabel}`, pieChartCenterX - 14, legendY); // Changed from -24 to -14
+    doc.text(`${wave.percentage.toFixed(1)}%`, pieChartCenterX + 15, legendY); // Changed from +5 to +15
     
-    legendY += 8;
+    legendY += 7;
   });
 
-  // Display brainwave data on the left side
-  let leftYPos = yPos + 5; // Reduced from yPos + 15 to yPos + 5
+  // Display brainwave data on the left side (PROPERLY ALIGNED)
+  let leftYPos = yPos + 5; // Start at same level as pie chart title
   
   brainwaveData.forEach((wave, index) => {
     // Main wave line: "Alpha (Relaxation): 0.088 (10.3% of total activity)"
@@ -532,7 +532,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
 
   yPos += 15;
 
-  // --- Streak and Consistency ---
+  // --- Practice Consistency ---
   yPos += 10; // Add margin before heading
   yPos = checkNewPage(yPos, 20);
   doc.setFontSize(FONT_SIZES.SECTION);
@@ -542,7 +542,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
 
   doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(100, 100, 100);
-  const consistencyText = "We track your 5 most recent sessions using a rolling window. When you complete a 6th session, the oldest is automatically replaced. This gives you focused insights into your current meditation habits.";
+  const consistencyText = "Here's how consistent you've been with your meditation practice recently.";
   const wrappedConsistency = doc.splitTextToSize(consistencyText, pageWidth - 40);
   doc.text(wrappedConsistency, 20, yPos);
   yPos += wrappedConsistency.length * 6;
@@ -643,90 +643,91 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   if (accurateStats && accurateStats.totalTrackedSessions > 0) {
     yPos += 5;
 
-    // Sessions in rolling window
-    yPos = checkNewPage(yPos, 20);
-    const windowStatus = accurateStats.isRollingWindow ? "(Rolling Window)" : "(Building History)";
-    doc.text(`Sessions Tracked: ${accurateStats.totalTrackedSessions} of ${accurateStats.maxTrackingSessions} ${windowStatus}`, 20, yPos);
+    // SIMPLIFIED AND USER-FRIENDLY STATS
+    
+    // Total sessions completed
+    yPos = checkNewPage(yPos, 8);
+    doc.text(`Total Sessions Completed: ${accurateStats.totalTrackedSessions}`, 20, yPos);
     yPos += 8;
 
-    if (!accurateStats.isRollingWindow) {
-      doc.setFontSize(9);
-      doc.setTextColor(150, 150, 150);
-      doc.text(`Complete ${5 - accurateStats.totalTrackedSessions} more sessions to fill the tracking window`, 20, yPos);
-      yPos += 8;
-      doc.setFontSize(11);
-      doc.setTextColor(60, 60, 60);
+    // Current streak (simplified)
+    yPos = checkNewPage(yPos, 8);
+    const streakText = accurateStats.recentStreak === 1 
+      ? "Current Streak: 1 day - Keep it going!"
+      : accurateStats.recentStreak > 1 
+        ? `Current Streak: ${accurateStats.recentStreak} days - Fantastic!`
+        : "Current Streak: 0 days - Start a new streak today!";
+    doc.text(streakText, 20, yPos);
+    yPos += 8;
+
+    // Practice frequency (simplified)
+    yPos = checkNewPage(yPos, 8);
+    let frequencyText = "";
+    if (accurateStats.frequency >= 1) {
+      frequencyText = `Practice Frequency: Daily (${accurateStats.frequency.toFixed(1)} sessions per day)`;
+    } else if (accurateStats.frequency >= 0.5) {
+      frequencyText = `Practice Frequency: Regular (${(accurateStats.frequency * 7).toFixed(1)} sessions per week)`;
     } else {
-      doc.setFontSize(9);
-      doc.setTextColor(150, 150, 150);
-      yPos += 8;
-      doc.setFontSize(11);
-      doc.setTextColor(60, 60, 60);
+      frequencyText = `Practice Frequency: Occasional (${(accurateStats.frequency * 7).toFixed(1)} sessions per week)`;
     }
-
-    // Recent streak within current window
-    yPos = checkNewPage(yPos, 15);
-    doc.text(`Current Streak: ${accurateStats.recentStreak} day${accurateStats.recentStreak !== 1 ? 's' : ''}`, 20, yPos);
+    doc.text(frequencyText, 20, yPos);
     yPos += 8;
-    const streakColor: [number, number, number] = accurateStats.recentStreak >= 3 ? [46, 204, 113] :
-      accurateStats.recentStreak >= 2 ? [241, 196, 15] : [52, 152, 219];
-    const streakPercentage = Math.min((accurateStats.recentStreak / 5) * 100, 100);
-    drawProgressIndicator(20, yPos - 2, 100, streakPercentage, streakColor);
-    yPos += 15;
 
-    // Unique practice days in window
-    yPos = checkNewPage(yPos, 15);
-    doc.text(`Unique Practice Days: ${accurateStats.uniqueRecentDays} of ${accurateStats.totalTrackedSessions}`, 20, yPos);
+    // Recent activity (last week)
+    yPos = checkNewPage(yPos, 8);
+    const activityText = accurateStats.recentActivity === 1 
+      ? "This Week: 1 session" 
+      : `This Week: ${accurateStats.recentActivity} sessions`;
+    doc.text(activityText, 20, yPos);
     yPos += 8;
-    const uniquePercentage = (accurateStats.uniqueRecentDays / Math.max(accurateStats.totalTrackedSessions, 1)) * 100;
-    const uniqueColor: [number, number, number] = uniquePercentage >= 80 ? [46, 204, 113] :
-      uniquePercentage >= 60 ? [241, 196, 15] : [231, 76, 60];
-    drawProgressIndicator(20, yPos - 2, 100, uniquePercentage, uniqueColor);
-    yPos += 15;
 
-    // Session frequency
-    yPos = checkNewPage(yPos, 16);
-    doc.text(`Session Frequency: ${accurateStats.frequency.toFixed(1)} sessions/day over ${accurateStats.daySpan} days`, 20, yPos);
-    yPos += 8;
-    doc.text(`Recent Activity (7 days): ${accurateStats.recentActivity} sessions`, 20, yPos);
-    yPos += 15;
-
-    // Consistency rating based on rolling window
-    yPos = checkNewPage(yPos, 30);
-  
-    // Add note about FIFO approach
-    yPos += 5;
-    doc.setFontSize(9);
-    doc.setTextColor(120, 120, 120);
-    const fifoNote = accurateStats.isRollingWindow
-      ? "Note: This analysis uses your 5 most recent sessions. Older sessions are automatically archived as you continue practicing."
-      : "Note: Complete more sessions to get fuller consistency insights from your rolling 5-session window.";
-    const wrappedFifo = doc.splitTextToSize(fifoNote, pageWidth - 40);
-    doc.text(wrappedFifo, 20, yPos);
-
-  } else {
-    // First session encouragement
-    yPos += 5;
-    yPos = checkNewPage(yPos, 40);
-    doc.setFontSize(12);
-    doc.setTextColor(46, 204, 113);
-    doc.text("*** Welcome to Your Meditation Journey! ***", 20, yPos);
+    // Days practiced (simplified)
+    yPos = checkNewPage(yPos, 8);
+    const daysText = accurateStats.uniqueRecentDays === 1 
+      ? "Days Practiced: 1 day" 
+      : `Days Practiced: ${accurateStats.uniqueRecentDays} different days`;
+    doc.text(daysText, 20, yPos);
     yPos += 10;
 
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    const welcomeText = "This is your first recorded session! We'll track your next 5 sessions in a rolling window. Each new session will give you better insights into your meditation habits.";
-    const wrappedWelcome = doc.splitTextToSize(welcomeText, pageWidth - 40);
-    doc.text(wrappedWelcome, 20, yPos);
-    yPos += wrappedWelcome.length * 6;
+    // Encouraging message based on consistency
+    yPos = checkNewPage(yPos, 15);
+    doc.setFontSize(FONT_SIZES.SMALL);
+    doc.setTextColor(60, 60, 60); // Changed from green (46, 204, 113) to dark gray/black
+    
+    let encouragement = "";
+    if (accurateStats.recentStreak >= 7) {
+      encouragement = "Amazing! You're on a fantastic streak. Meditation is becoming a strong habit!";
+    } else if (accurateStats.recentStreak >= 3) {
+      encouragement = "Great job! You're building a solid meditation routine. Keep it up!";
+    } else if (accurateStats.recentStreak >= 1) {
+      encouragement = "Good start! Try to meditate again tomorrow to build your streak."; // Fixed - completely clean line
+    } else if (accurateStats.totalTrackedSessions >= 3) {
+      encouragement = "You're making progress! Try to meditate more regularly for better results.";
+    } else {
+      encouragement = "Every session counts! Regular practice will help you see greater benefits.";
+    }
+    
+    const wrappedEncouragement = doc.splitTextToSize(encouragement, pageWidth - 40);
+    doc.text(wrappedEncouragement, 20, yPos);
+    yPos += wrappedEncouragement.length * 6;
 
-    yPos += 8;
-    doc.setFontSize(11);
+  } else {
+    // First session encouragement (SIMPLIFIED)
+    yPos += 5;
+    yPos = checkNewPage(yPos, 25);
+    doc.setFontSize(FONT_SIZES.SUBSECTION);
+    doc.setTextColor(46, 204, 113);
+    doc.text("Welcome to Your Meditation Journey!", 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(FONT_SIZES.BODY);
     doc.setTextColor(60, 60, 60);
-    doc.text("TIP: Your 5 most recent sessions will always be tracked for focused insights!", 20, yPos);
+    doc.text("This is your first session! Come back tomorrow to start building a streak.", 20, yPos);
+    yPos += 8;
+    doc.text("Tip: Even 5 minutes daily can make a big difference!", 20, yPos);
   }
 
-  yPos += 15; // Add some space before next section
+  yPos += 5; // Add some space before next section
 
  
   // --- Recommendations ---
