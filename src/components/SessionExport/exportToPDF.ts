@@ -348,15 +348,15 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   // Check if we need a new page for the brainwave section
   yPos = checkNewPage(yPos, 120);
 
-  // Define layout positions - side by side (SHIFTED PIE CHART LEFT)
+  // Define layout positions - side by side 
   const leftColumnX = 20;
   const leftColumnWidth = 100;
   const rightColumnX = leftColumnX + leftColumnWidth + 15; // 15px gap
-  const pieChartCenterX = rightColumnX + 25; // REDUCED from 35 to 25 (moved 10px left)
-  const pieChartCenterY = yPos + 25; // MOVED UP to align with left content
+  const pieChartCenterX = rightColumnX + 25; 
+  const pieChartCenterY = yPos + 25; 
   const pieChartRadius = 25;
 
-  // Function to draw pie chart (same as before)
+  // Function to draw pie chart 
   const drawPieChart = (centerX: number, centerY: number, radius: number, data: any[]) => {
     let currentAngle = 0;
     
@@ -417,7 +417,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     doc.circle(centerX, centerY, radius, 'S');
   };
 
-  // Add chart title ABOVE pie chart (ALIGNED WITH LEFT CONTENT)
+  // Add chart title ABOVE pie chart 
   doc.setFontSize(FONT_SIZES.BODY);
   doc.setTextColor(44, 62, 80);
   
@@ -425,30 +425,30 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
   // Draw pie chart on the right side
   drawPieChart(pieChartCenterX, pieChartCenterY, pieChartRadius, brainwaveData);
 
-  // Add legend below the pie chart (CENTERED AND SHIFTED RIGHT)
+  // Add legend below the pie chart 
   let legendY = pieChartCenterY + pieChartRadius + 8; // Reduced gap
   doc.setFontSize(FONT_SIZES.SMALL);
   
   brainwaveData.forEach((wave, index) => {
-    // Draw color box (SHIFTED RIGHT AND CENTERED)
+    // Draw color box 
     doc.setFillColor(wave.color[0], wave.color[1], wave.color[2]);
-    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'F'); // Changed from -30 to -20
+    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'F'); 
     
     // Draw border around color box
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
-    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'S'); // Changed from -30 to -20
+    doc.rect(pieChartCenterX - 20, legendY - 3, 4, 4, 'S'); 
     
     // Add label
     doc.setTextColor(60, 60, 60);
     const waveLabel = wave.name.split(' (')[0];
-    doc.text(`${waveLabel}`, pieChartCenterX - 14, legendY); // Changed from -24 to -14
-    doc.text(`${wave.percentage.toFixed(1)}%`, pieChartCenterX + 15, legendY); // Changed from +5 to +15
+    doc.text(`${waveLabel}`, pieChartCenterX - 14, legendY); 
+    doc.text(`${wave.percentage.toFixed(1)}%`, pieChartCenterX + 15, legendY); 
     
     legendY += 7;
   });
 
-  // Display brainwave data on the left side (PROPERLY ALIGNED)
+  // Display brainwave data on the left side 
   let leftYPos = yPos + 5; // Start at same level as pie chart title
   
   brainwaveData.forEach((wave, index) => {
@@ -475,7 +475,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     const idealText = `• ${wave.ideal}`;
     const wrappedIdeal = doc.splitTextToSize(idealText, leftColumnWidth);
     doc.text(wrappedIdeal, leftColumnX, leftYPos);
-    leftYPos += wrappedIdeal.length * 5 + 8; // Extra space between wave types
+    leftYPos += wrappedIdeal.length * 5 + 8;
   });
 
   // Update yPos to move past both columns

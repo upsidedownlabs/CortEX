@@ -13,7 +13,7 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
   disabled,
   darkMode
 }) => {
-  const durations = [1, 10, 15, 30, 45, 60];
+  const durations = [5, 10, 15, 30, 45, 60];
   const buttonbg = darkMode ? "bg-amber-300" : "bg-amber-600";
   const durationbtnBg = darkMode ? "bg-zinc-700/50" : "bg-stone-100/80";
 
