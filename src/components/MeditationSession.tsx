@@ -632,10 +632,10 @@ export const MeditationSession = ({
                                 disabled={!connected}
                                 onClick={startMeditation}
                                 className={`min-w-[120px] max-w-[180px] w-auto px-4 py-4 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
-       rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform text-white
-        shadow-sm ${darkMode ? "bg-amber-300  text-zinc-800/90  "
+                                 rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform text-white
+                                  shadow-sm ${darkMode ? "bg-amber-300  text-zinc-800/90  "
                                         : "bg-amber-600  text-white/90"}  "}
-       ${connected
+                                 ${connected
                                         ? `${buttonbg} cursor-pointer hover:scale-105 hover:shadow-lg active:scale-95`
                                         : 'bg-[#E4967E] opacity-50 text-white cursor-not-allowed'
                                     }`}
@@ -660,9 +660,7 @@ export const MeditationSession = ({
 
                                 return (
                                     <div className="space-y-2">
-                                        {/* Main Stats Row */}
-
-
+                                     
                                         {/* Trend Analysis */}
                                         {trends && (
                                             <div className="bg-opacity-50 rounded-lg p-3 space-y-2"
@@ -752,8 +750,6 @@ export const MeditationSession = ({
             ${darkMode ? "bg-emerald-500 text-zinc-800/90" : "bg-emerald-600 text-white/90"}
             `}
                             >
-
-
                                 <span className="relative z-10 truncate font-medium">Download PDF</span>
                             </button>
                         </div>
@@ -768,11 +764,14 @@ export const MeditationSession = ({
 
                         {/* Responsive Timer Display */}
                         <div className="absolute inset-0 flex items-center justify-center p-4">
-                            <div className={`text-center ${accent}`}>
+                            <div
+                                className="text-center"
+                                style={{ color: darkMode ? "#fcd34d" : "#d97706" }}
+                            >
                                 <div className="text-lg sm:text-lg md:text-lg lg:text-2xl font-bold font-mono leading-tight">
                                     {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                                 </div>
-                                <div className="text-md  md:text-lg  opacity-70 mt-1">
+                                <div className="text-md md:text-lg opacity-70 mt-1">
                                     remaining
                                 </div>
                             </div>
@@ -782,24 +781,8 @@ export const MeditationSession = ({
                             <circle
                                 cx="50"
                                 cy="50"
-                                r="40"
-                                stroke={darkMode ? "#548687" : "#548687"}
-                                strokeWidth="1"
-                                fill="none"
-                            />
-                            <circle
-                                cx="50"
-                                cy="50"
                                 r="38"
-                                stroke={darkMode ? "#548687" : "#548687"}
-                                strokeWidth="2"
-                                fill="none"
-                            />
-                            <circle
-                                cx="50"
-                                cy="50"
-                                r="38"
-                                stroke="url(#progressGradient)"
+                                stroke={darkMode ? "#fcd34d" : "#d97706"} // Amber color for primaryAccent
                                 strokeWidth="3"
                                 fill="none"
                                 strokeDasharray={Math.PI * 2 * 46}
@@ -807,12 +790,6 @@ export const MeditationSession = ({
                                 className="transition-all duration-1000 ease-linear"
                                 strokeLinecap="round"
                             />
-                            <defs>
-                                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stopColor={darkMode ? "#60a5fa" : "#3b82f6"} />
-                                    <stop offset="100%" stopColor={darkMode ? "#34d399" : "#10b981"} />
-                                </linearGradient>
-                            </defs>
                         </svg>
                     </div>
 

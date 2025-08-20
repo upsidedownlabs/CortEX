@@ -225,7 +225,10 @@ const MeditationAnalysis: React.FC<Props> = ({
     ctx.textAlign = 'center';
 
     // Always use the exact duration passed from props
-    const actualSessionDurationSeconds = sessionDuration * 60;
+    const actualSessionDurationSeconds =
+      data.length > 1 && data[0].timestamp && data[data.length - 1].timestamp
+        ? ((data[data.length - 1]?.timestamp ?? 0) - (data[0]?.timestamp ?? 0)) / 1000
+        : sessionDuration * 60;
 
     const timePerPhase = actualSessionDurationSeconds / 12;
 
