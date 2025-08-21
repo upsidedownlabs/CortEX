@@ -511,15 +511,15 @@ export default function SignalVisualizer() {
                                 <button
                                     onClick={connected ? disconnect : connect}
                                     className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
-        rounded-md font-semibold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform hover:scale-105 cursor-pointer
-        ${darkMode
-            ? "bg-amber-300 text-zinc-800/90"
-            : "bg-amber-600 text-white/90"
-        }
-        ${buttonbg}`}
+                                     rounded-md font-semibold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform  cursor-pointer
+                                     ${darkMode
+                                  ? "bg-amber-300 text-zinc-800/90"
+                                      : "bg-amber-600 text-white/90"
+                                     }
+                               ${buttonbg}`}
                                     style={{ padding: "0.3rem" }}
                                 >
-                                    <span className="font-medium ">
+                                    <span className="font-bold ">
                                         {connected ? "Disconnect" : "Connect"}
                                     </span>
                                 </button>

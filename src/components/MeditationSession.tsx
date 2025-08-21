@@ -631,17 +631,18 @@ export const MeditationSession = ({
                             <button
                                 disabled={!connected}
                                 onClick={startMeditation}
-                                className={`min-w-[120px] max-w-[180px] w-auto px-4 py-4 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
-                                 rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform text-white
-                                  shadow-sm ${darkMode ? "bg-amber-300  text-zinc-800/90  "
-                                        : "bg-amber-600  text-white/90"}  "}
-                                 ${connected
-                                        ? `${buttonbg} cursor-pointer hover:scale-105 hover:shadow-lg active:scale-95`
-                                        : 'bg-[#E4967E] opacity-50 text-white cursor-not-allowed'
-                                    }`}
+                                className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
+        rounded-md font-semibold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform  cursor-pointer
+        ${darkMode
+                                        ? "bg-amber-300 text-zinc-800/90"
+                                        : "bg-amber-600 text-white/90"
+                                    }
+        ${buttonbg}
+        ${!connected ? 'bg-[#E4967E] opacity-50 text-white cursor-not-allowed' : ''}
+    `}
+                                style={{ padding: "0.3rem" }}
                             >
-
-                                <span className="relative z-10 truncate font-medium">Begin Session</span>
+                                <span className="relative z-10 truncate font-bold">Begin Session</span>
                             </button>
                         </div>
 
