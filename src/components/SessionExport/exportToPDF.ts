@@ -89,6 +89,8 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
       focusScore: calculateAverage(recent, 'focusScore') - calculateAverage(previous, 'focusScore'),
       alpha: calculateAverage(recent, 'averages.alpha') - calculateAverage(previous, 'averages.alpha'),
       theta: calculateAverage(recent, 'averages.theta') - calculateAverage(previous, 'averages.theta'),
+      beta: calculateAverage(recent, 'averages.beta') - calculateAverage(previous, 'averages.beta'),
+      delta: calculateAverage(recent, 'averages.delta') - calculateAverage(previous, 'averages.delta'),
     };
   }
 
@@ -273,17 +275,21 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
     const focusImprovement = getImprovementText(trends.focusScore, 'score');
     const alphaImprovement = getImprovementText(trends.alpha * 100);
     const thetaImprovement = getImprovementText(trends.theta * 100);
-
-    // Set consistent styling for trend lines
-    doc.setFontSize(FONT_SIZES.BODY);
-    doc.setTextColor(60, 60, 60);
+    const betaImprovement = getImprovementText(trends.beta * 100);
+    const deltaImprovement = getImprovementText(trends.delta * 100);
 
     const trendLines = [
       `Meditation Quality: ${meditationImprovement.text}`,
       `Focus Score: ${focusImprovement.text}`,
       `Alpha Waves: ${alphaImprovement.text}`,
       `Theta Waves: ${thetaImprovement.text}`,
+      `Beta Waves: ${betaImprovement.text}`,
+      `Delta Waves: ${deltaImprovement.text}`,
     ];
+
+    // Set consistent styling for trend lines
+    doc.setFontSize(FONT_SIZES.BODY);
+    doc.setTextColor(60, 60, 60);
 
     trendLines.forEach(line => {
       yPos = checkNewPage(yPos, 8);
@@ -331,7 +337,7 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
       name: "Theta (Deep Meditation)",
       value: sessionResults.averages.theta, 
       percentage: ((sessionResults.averages.theta / totalPower) * 100),
-      description: "Creative insights, deep focus",
+      description: "Creative insights",
       ideal: "Higher values indicate profound meditative states",
       color: [142, 68, 173] as [number, number, number]
     },
@@ -779,6 +785,11 @@ export const exportToPDF = (filename: string, sessionResults: SessionResultsType
 
   doc.setFontSize(FONT_SIZES.SMALL);
   doc.setTextColor(44, 62, 80);
+// Draw table headers
+
+doc.setFontSize(FONT_SIZES.BODY);
+doc.setTextColor(60, 60, 60);
+// Draw table rows
 
   // Enhanced function to re-analyze mental state from stored averages
   const reAnalyzeMentalState = (averages: any) => {

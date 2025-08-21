@@ -216,7 +216,7 @@ export const MeditationSession = ({
             const mostFrequent = Object.entries(averages)
                 .filter(([key]) => key !== "symmetry")
                 .sort((a, b) => b[1] - a[1])[0][0];
-            
+
             switch (mostFrequent) {
                 case 'alpha':
                     mentalState = 'Relaxed';
@@ -660,7 +660,7 @@ export const MeditationSession = ({
 
                                 return (
                                     <div className="space-y-2">
-                                     
+
                                         {/* Trend Analysis */}
                                         {trends && (
                                             <div className="bg-opacity-50 rounded-lg p-3 space-y-2"
@@ -731,24 +731,22 @@ export const MeditationSession = ({
                         <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-3 gap-2 sm:gap-3" style={{ paddingBottom: '0.75rem', padding: '0.75rem' }}>
                             <button
                                 onClick={() => setShowResults(true)}
-                                className={`w-full sm:min-w-[120px] sm:max-w-[180px] sm:w-auto px-4 py-3 sm:px-5 sm:py-2.5 md:px-6 md:py-3 lg:px-8 lg:py-4
-            text-sm sm:text-xs md:text-sm lg:text-base xl:text-lg
-            rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform
-            shadow-sm ${darkMode ? "bg-amber-300 text-zinc-800/90" : "bg-amber-600 text-white/90"}
-            ${buttonbg} cursor-pointer  active:scale-95
-            `}
+                                className={`min-w-[120px] max-w-[180px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
+        rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform hover:scale-105
+        ${darkMode ? "bg-amber-300 text-zinc-800/90" : "bg-amber-600 text-white/90"} cursor-pointer
+        ${buttonbg}`}
+                                style={{ padding: "0.3rem" }}
                             >
                                 <span className="relative z-10 truncate font-medium">View Results</span>
                             </button>
 
                             <button
                                 onClick={() => downloadSessionResults('pdf')}
-                                className={`w-full sm:min-w-[130px] sm:max-w-[180px] sm:w-auto px-4 py-3 sm:px-5 sm:py-2.5 md:px-6 md:py-3 lg:px-8 lg:py-4
-            text-sm sm:text-xs md:text-sm lg:text-base xl:text-lg
-            rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform
-            shadow-sm cursor-pointer active:scale-95
-            ${darkMode ? "bg-emerald-500 text-zinc-800/90" : "bg-emerald-600 text-white/90"}
-            `}
+                                className={`min-w-[130px] max-w-[180px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
+        rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform hover:scale-105
+        ${darkMode ? "bg-amber-300 text-zinc-800/90" : "bg-amber-600 text-white/90"} cursor-pointer
+        ${buttonbg}`}
+                                style={{ padding: "0.3rem" }}
                             >
                                 <span className="relative z-10 truncate font-medium">Download PDF</span>
                             </button>
@@ -801,7 +799,7 @@ export const MeditationSession = ({
                         className={`min-w-[120px] max-w-[160px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
                         rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm transform 
                         ${timeLeft > 0
-                                ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
+                                ? 'bg-gray-200 text-gray-900 cursor-not-allowed opacity-90'
                                 : `${buttonbg} text-black cursor-pointer hover:scale-105`
                             }`}
                         style={{ marginBottom: '0.75rem' }}
@@ -817,7 +815,7 @@ export const MeditationSession = ({
 
                     {/* Modified status message */}
                     <div className={`text-xs text-center mt-2 ${darkMode ? "text-zinc-400" : "text-zinc-600"}`}>
-                        {timeLeft > 0 ? "Session must be completed - no early stopping allowed" : "Session completed!"}
+                        {timeLeft > 0 ? "No early stopping allowed" : "Session completed!"}
                     </div>
                 </div>
             )}

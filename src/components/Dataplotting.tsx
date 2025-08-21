@@ -510,14 +510,14 @@ export default function SignalVisualizer() {
                             <div className="w-full flex justify-center px-2 sm:px-3 md:px-4" style={{ paddingBottom: '0.75rem' }}>
                                 <button
                                     onClick={connected ? disconnect : connect}
-                                    className={`min-w-[120px] max-w-[160px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
-                             rounded-md font-semibold transition-all duration-300  flex items-center justify-center gap-2 
-                             whitespace-nowrap transform hover:scale-105 cursor-pointer
-                             ${darkMode
-                                            ? "bg-amber-300  text-zinc-800/90  "
-                                            : "bg-amber-600  text-white/90"
-                                        }
-                             `}
+                                    className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
+        rounded-md font-semibold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform hover:scale-105 cursor-pointer
+        ${darkMode
+            ? "bg-amber-300 text-zinc-800/90"
+            : "bg-amber-600 text-white/90"
+        }
+        ${buttonbg}`}
+                                    style={{ padding: "0.3rem" }}
                                 >
                                     <span className="font-medium ">
                                         {connected ? "Disconnect" : "Connect"}
@@ -533,7 +533,7 @@ export default function SignalVisualizer() {
                             className={`rounded-xl p-3 sm:p-4 md:p-6 ${cardBg} flex flex-col transition-colors duration-300 min-h-0 h-1/3 overflow-hidden w-full `}
                         >
                             <div className="w-full flex justify-center mb-2 sm:mb-3 md:mb-4">
-                                <h3 className={`text-xs sm:text-sm md:text-base lg:text-lg font-semibold  ${textPrimary}`}>Meditation</h3>
+                                <h3 className={`text-xs sm:text-sm md:text-base lg:text-lg font-semibold  ${primaryAccent}`}>Meditation</h3>
                             </div>
 
                             <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
