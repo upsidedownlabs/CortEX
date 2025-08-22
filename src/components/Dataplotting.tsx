@@ -593,11 +593,7 @@ export default function SignalVisualizer() {
                                                                     data={sessionDataRef.current}
                                                                     sessionDuration={
                                                                         sessionDataRef.current.length > 1
-                                                                            ? Math.round(
-                                                                                (sessionDataRef.current.at(-1)!.timestamp! -
-                                                                                    sessionDataRef.current[0].timestamp!) /
-                                                                                60000
-                                                                            )
+                                                                            ? ((sessionDataRef.current.at(-1)!.timestamp! - sessionDataRef.current[0].timestamp!) / 60000)
                                                                             : 0
                                                                     }
                                                                     darkMode={darkMode}
