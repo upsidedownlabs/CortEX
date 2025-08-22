@@ -167,17 +167,18 @@ export const MeditationSession = ({
         };
 
         const totalPower = averages.alpha + averages.beta + averages.theta + averages.delta;
+        const safeDiv = (v: number) => (totalPower > 0 ? (v / totalPower) * 100 : 0);
 
         const statePercentages = {
-            Relaxed: ((averages.alpha / totalPower) * 100).toFixed(1),
-            Focused: ((averages.beta / totalPower) * 100).toFixed(1),
-            "Meditation": ((averages.theta / totalPower) * 100).toFixed(1),
-            Drowsy: ((averages.delta / totalPower) * 100).toFixed(1),
+            Relaxed: safeDiv(averages.alpha).toFixed(1),
+            Focused: safeDiv(averages.beta).toFixed(1),
+            "Meditation": safeDiv(averages.theta).toFixed(1),
+            Drowsy: safeDiv(averages.delta).toFixed(1),
         };
 
-        const goodMeditationPct = (
-            ((averages.alpha + averages.theta) / totalPower) * 100
-        ).toFixed(1);
+        const goodMeditationPct = totalPower > 0
+            ? (((averages.alpha + averages.theta) / totalPower) * 100).toFixed(1)
+            : "0.0";
 
         // Enhanced mental state determination with multiple criteria
         let mentalState = '';
@@ -508,7 +509,12 @@ export const MeditationSession = ({
     // Helper function to get progress trends
     const getProgressTrends = () => {
         const historyKey = "meditationHistory";
-        const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        let history: any[] = [];
+        try {
+            history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        } catch {
+            history = [];
+        }
 
         if (history.length < 2) return null;
 
@@ -548,7 +554,12 @@ export const MeditationSession = ({
     // Function to get session statistics
     const getSessionStats = () => {
         const historyKey = "meditationHistory";
-        const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        let history: any[] = [];
+        try {
+            history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        } catch {
+            history = [];
+        }
 
         const today = new Date().toISOString().split('T')[0];
 
@@ -784,8 +795,8 @@ export const MeditationSession = ({
                                 stroke={darkMode ? "#fcd34d" : "#d97706"} // Amber color for primaryAccent
                                 strokeWidth="3"
                                 fill="none"
-                                strokeDasharray={Math.PI * 2 * 46}
-                                strokeDashoffset={(Math.PI * 2 * 46 * (1 - progressPercentage / 100))}
+                                strokeDasharray={Math.PI * 2 * 38}
+                                strokeDashoffset={(Math.PI * 2 * 38 * (1 - progressPercentage / 100))}
                                 className="transition-all duration-1000 ease-linear"
                                 strokeLinecap="round"
                             />
