@@ -19,7 +19,6 @@ import HRVPlotCanvas, { HRVPlotCanvasHandle } from '@/components/Hrvwebglplot'
 import { StateIndicator, State } from "@/components/StateIndicator";
 import MeditationWaveform from "../components/MeditationWaveform"; // Add this import
 import { predictState } from "@/lib/stateClassifier";
-import { useRouter } from 'next/navigation';
 import { MeditationSession } from '../components/MeditationSession';
 import QuoteCard from './QuoteCard';
 import Link from "next/link";
@@ -69,25 +68,21 @@ export default function SignalVisualizer() {
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
-        averageHRV: number;    // ✅ new
-        averageBPM: number;    // ✅ new
+        averageHRV: number;  
+        averageBPM: number;   
     } | null>(null);
     // 1) Create refs for each display element
     const currentRef = useRef<HTMLDivElement>(null);
     const highRef = useRef<HTMLDivElement>(null);
     const lowRef = useRef<HTMLDivElement>(null);
     const avgRef = useRef<HTMLDivElement>(null);
-    let previousCounter: number | null = null; // Variable to store the previous counter value for loss detection
     const bpmWorkerRef = useRef<Worker | null>(null);
-    const previousCounterRef = useRef<number | null>(null); // Replace previousCounter with a useRef
     // new HRV refs
     const hrvRef = useRef<HTMLSpanElement>(null);
     const hrvHighRef = useRef<HTMLSpanElement>(null);
     const hrvLowRef = useRef<HTMLSpanElement>(null);
     const hrvAvgRef = useRef<HTMLSpanElement>(null);
-    const [hrvData, setHrvData] = useState<{ time: number; hrv: number }[]>([]);
     const hrvplotRef = useRef<HRVPlotCanvasHandle>(null);
-    const router = useRouter();
     const leftMV = useMotionValue(0);
     const rightMV = useMotionValue(0);
     // onNewECG: buffer ECG and every 500 samples (1 s) send to BPM worker ---
@@ -138,11 +133,6 @@ export default function SignalVisualizer() {
 
     const { connected, connect, disconnect } = useBleStream(datastream);
 
-    const channelColors: Record<string, string> = {
-        ch0: "#C29963",
-        ch1: "#548687",
-        ch2: "#9A7197",
-    };
 
     // inside your component, before the return:
     const bandData = [
@@ -840,11 +830,11 @@ export default function SignalVisualizer() {
                                                         <Radar
                                                             name="Ch0"
                                                             dataKey="value"
-                                                            stroke={channelColors.ch0}
+                                                            stroke={CHANNEL_COLORS.ch0}
                                                             strokeWidth={1.5}
-                                                            fill={channelColors.ch0}
+                                                            fill={CHANNEL_COLORS.ch0}
                                                             fillOpacity={0.3}
-                                                            dot={{ fill: channelColors.ch0, strokeWidth: 1, r: 2 }}
+                                                            dot={{ fill: CHANNEL_COLORS.ch0, strokeWidth: 1, r: 2 }}
                                                         />
                                                     </RadarChart>
                                                 </ResponsiveContainer>
@@ -885,11 +875,11 @@ export default function SignalVisualizer() {
                                                         <Radar
                                                             name="Ch1"
                                                             dataKey="value"
-                                                            stroke={channelColors.ch1}
+                                                            stroke={CHANNEL_COLORS.ch1}
                                                             strokeWidth={1.5}
-                                                            fill={channelColors.ch1}
+                                                            fill={CHANNEL_COLORS.ch1}
                                                             fillOpacity={0.3}
-                                                            dot={{ fill: channelColors.ch1, strokeWidth: 1, r: 2 }}
+                                                            dot={{ fill: CHANNEL_COLORS.ch1, strokeWidth: 1, r: 2 }}
                                                         />
                                                     </RadarChart>
                                                 </ResponsiveContainer>

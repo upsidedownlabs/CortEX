@@ -10,9 +10,7 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "../components/ui/card";
-import { Separator } from "../components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '../components/ui/dialog';
 import { CircleAlert } from "lucide-react";
