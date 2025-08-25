@@ -19,7 +19,6 @@ import HRVPlotCanvas, { HRVPlotCanvasHandle } from '@/components/Hrvwebglplot'
 import { StateIndicator, State } from "@/components/StateIndicator";
 import MeditationWaveform from "../components/MeditationWaveform"; // Add this import
 import { predictState } from "@/lib/stateClassifier";
-import { useRouter } from 'next/navigation';
 import { MeditationSession } from '../components/MeditationSession';
 import QuoteCard from './QuoteCard';
 import Link from "next/link";
@@ -69,23 +68,21 @@ export default function SignalVisualizer() {
         statePercentages: Record<string, string>;
         goodMeditationPct: string;
         weightedEEGScore: number;
+        averageHRV: number;  
+        averageBPM: number;   
     } | null>(null);
     // 1) Create refs for each display element
     const currentRef = useRef<HTMLDivElement>(null);
     const highRef = useRef<HTMLDivElement>(null);
     const lowRef = useRef<HTMLDivElement>(null);
     const avgRef = useRef<HTMLDivElement>(null);
-    let previousCounter: number | null = null; // Variable to store the previous counter value for loss detection
     const bpmWorkerRef = useRef<Worker | null>(null);
-    const previousCounterRef = useRef<number | null>(null); // Replace previousCounter with a useRef
     // new HRV refs
     const hrvRef = useRef<HTMLSpanElement>(null);
     const hrvHighRef = useRef<HTMLSpanElement>(null);
     const hrvLowRef = useRef<HTMLSpanElement>(null);
     const hrvAvgRef = useRef<HTMLSpanElement>(null);
-    const [hrvData, setHrvData] = useState<{ time: number; hrv: number }[]>([]);
     const hrvplotRef = useRef<HRVPlotCanvasHandle>(null);
-    const router = useRouter();
     const leftMV = useMotionValue(0);
     const rightMV = useMotionValue(0);
     // onNewECG: buffer ECG and every 500 samples (1 s) send to BPM worker ---
@@ -93,6 +90,8 @@ export default function SignalVisualizer() {
     const [viewMode, setViewMode] = useState<"radar" | "meditation">("radar");
     const [selectedGoal, setSelectedGoal] = useState<"anxiety" | "meditation" | "sleep">("anxiety");
     const [showResults, setShowResults] = useState(false);
+    const lastBPMRef = useRef<number | null>(null);
+    const lastHRVRef = useRef<number | null>(null);
 
     const selectedGoalRef = useRef(selectedGoal);
 
@@ -134,11 +133,6 @@ export default function SignalVisualizer() {
 
     const { connected, connect, disconnect } = useBleStream(datastream);
 
-    const channelColors: Record<string, string> = {
-        ch0: "#C29963",
-        ch1: "#548687",
-        ch2: "#9A7197",
-    };
 
     // inside your component, before the return:
     const bandData = [
@@ -216,6 +210,8 @@ export default function SignalVisualizer() {
                 theta: (smooth0.theta + smooth1.theta) / 2,
                 delta: (smooth0.delta + smooth1.delta) / 2,
                 symmetry: Math.abs(smooth0.alpha - smooth1.alpha),
+                bpm: lastBPMRef.current ?? null,
+                hrv: lastHRVRef.current ?? null,
             };
 
             // ✅ Only record data if meditating
@@ -344,6 +340,9 @@ export default function SignalVisualizer() {
                 lastStateUpdateRef.current = now;
             }
 
+            if (bpm !== null) lastBPMRef.current = bpm;
+            if (hrv !== null) lastHRVRef.current = hrv;
+
             // Add current state to window
             stateWindowRef.current.push({
                 state: currentState,
@@ -433,8 +432,8 @@ export default function SignalVisualizer() {
 
 
     const bgGradient = darkMode
-        ? "bg-gradient-to-b from-zinc-900 to-neutral-900"
-        : "bg-gradient-to-b from-neutral-50 to-stone-100";
+        ? "bg-neutral-900"
+        : "bg-stone-200";
     const cardBg = darkMode
         ? "bg-zinc-800/90 border-zinc-700/50"
         : "bg-white/95 border-stone-200";
@@ -456,7 +455,7 @@ export default function SignalVisualizer() {
             <header className={`${darkMode
                 ? 'bg-zinc-900/90 backdrop-blur-sm border-b border-amber-900/20'
                 : 'bg-white/90 backdrop-blur-sm border-b border-amber-100'} 
-                h-8 sm:h-9 md:h-10 lg:h-11 shadow-lg transition-colors duration-300 z-10 flex-shrink-0`}>
+                h-8 sm:h-9 md:h-10 lg:h-11 transition-colors duration-300 z-10 flex-shrink-0`}>
                 <div className="w-full h-full flex justify-between items-center" style={{ paddingLeft: '1.25rem', paddingRight: '1.25rem' }}>
                     <div className="flex items-center space-x-3">
                         <Activity className={`${primaryAccent} w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7`} />
@@ -470,7 +469,7 @@ export default function SignalVisualizer() {
                             onClick={() => setDarkMode(!darkMode)}
                             className={`p-1.5 sm:p-2 md:p-2.5 rounded-xl transition-all duration-300 
                                 ${darkMode ? ' text-zinc-200' : ' text-stone-700'} 
-                                shadow-sm hover:shadow-md transform hover:scale-105 flex items-center justify-center cursor-pointer`}
+                                transform hover:scale-105 flex items-center justify-center cursor-pointer`}
                         >
                             {darkMode ?
                                 <Sun className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" strokeWidth={2} /> :
@@ -491,7 +490,7 @@ export default function SignalVisualizer() {
                     <div className="lg:col-span-1 flex flex-col gap-2 h-full min-h-0 overflow-hidden p-2 sm:p-3 md:p-4">
 
                         {/* First card - device connection */}
-                        <div className={`rounded-xl shadow-md p-3 sm:p-4 md:p-6 border ${cardBg} flex flex-col items-center transition-colors duration-300 h-1/3 min-h-0 overflow-hidden`}>
+                        <div className={`rounded-xl p-3 sm:p-4 md:p-6 border ${cardBg} flex flex-col items-center transition-colors duration-300 h-1/3 min-h-0 overflow-hidden`}>
                             <div className="flex-1 flex flex-col items-center justify-center w-full min-h-0">
                                 <div className={`p-2 sm:p-3 md:p-4 rounded-xl ${iconBoxBg} transition-colors duration-300`}>
                                     <Box className={`${primaryAccent} w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7`} strokeWidth={1.5} />
@@ -501,16 +500,16 @@ export default function SignalVisualizer() {
                             <div className="w-full flex justify-center px-2 sm:px-3 md:px-4" style={{ paddingBottom: '0.75rem' }}>
                                 <button
                                     onClick={connected ? disconnect : connect}
-                                    className={`min-w-[120px] max-w-[160px] w-auto px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
-                             rounded-xl font-semibold transition-all duration-300  flex items-center justify-center gap-2 
-                             whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 cursor-pointer
-                             ${darkMode
-                                            ? "bg-amber-300  text-zinc-800/90  "
-                                            : "bg-amber-600  text-zinc-800/90  "
+                                    className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base
+                                     rounded-md font-semibold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap transform  cursor-pointer
+                                     ${darkMode
+                                            ? "bg-amber-300 text-zinc-800/90"
+                                            : "bg-amber-600 text-white/90"
                                         }
-                             `}
+                               ${buttonbg}`}
+                                    style={{ padding: "0.3rem" }}
                                 >
-                                    <span className="font-medium ">
+                                    <span className="font-bold ">
                                         {connected ? "Disconnect" : "Connect"}
                                     </span>
                                 </button>
@@ -521,10 +520,10 @@ export default function SignalVisualizer() {
 
                         {/* second card - Meditation View (Last Session Preview with Modal) */}
                         <div
-                            className={`rounded-xl shadow-md p-3 sm:p-4 md:p-6 ${cardBg} flex flex-col transition-colors duration-300 min-h-0 h-1/3 overflow-hidden w-full `}
+                            className={`rounded-xl p-3 sm:p-4 md:p-6 ${cardBg} flex flex-col transition-colors duration-300 min-h-0 h-1/3 overflow-hidden w-full `}
                         >
                             <div className="w-full flex justify-center mb-2 sm:mb-3 md:mb-4">
-                                <h3 className={`text-xs sm:text-sm md:text-base lg:text-lg font-semibold  ${textPrimary}`}>Meditation</h3>
+                                <h3 className={`text-sm sm:text-md md:text-lg lg:text-xl font-semibold  ${primaryAccent}`}>Meditation</h3>
                             </div>
 
                             <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
@@ -548,8 +547,9 @@ export default function SignalVisualizer() {
                                                 <button
                                                     onClick={() => setSessionResults(null)}
                                                     className={`min-w-[120px] max-w-[160px] w-auto px-10 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base 
-                            rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105
-                            text-black cursor-pointer
+                            rounded-md transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap  transform hover:scale-105
+                            ${darkMode ? "bg-amber-300  text-zinc-800/90  "
+                                                            : "bg-amber-600  text-white/90"}  "}  cursor-pointer
                                  ${buttonbg}`}
                                                     style={{ padding: "0.3rem" }}
                                                 >
@@ -560,7 +560,7 @@ export default function SignalVisualizer() {
 
                                             {showResults && (
                                                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-                                                    <div className="w-full max-w-4xl mx-4 sm:mx-6 my-6 bg-white dark:bg-black rounded-xl shadow-xl max-h-[90vh] overflow-y-auto flex flex-col">
+                                                    <div className="w-full max-w-4xl mx-4 sm:mx-6 my-6 bg-white dark:bg-black rounded-xl max-h-[90vh] overflow-y-auto flex flex-col">
                                                         {/* Header with close button */}
                                                         <div className="relative flex items-center justify-center  top-0 z-10 mb-4 h-10 sm:h-14">
                                                             <h4 className="absolute left-1/2 -translate-x-1/2 text-sm sm:text-base md:text-lg lg:text-xl font-bold text-[#548687]">
@@ -573,8 +573,6 @@ export default function SignalVisualizer() {
                                                                 Close
                                                             </button>
                                                         </div>
-
-
                                                         {/* Main content area */}
                                                         <div className="flex flex-col lg:flex-row p-4 sm:p-6 flex-1">
                                                             {/* Left Panel - Waveform Visualization */}
@@ -583,11 +581,7 @@ export default function SignalVisualizer() {
                                                                     data={sessionDataRef.current}
                                                                     sessionDuration={
                                                                         sessionDataRef.current.length > 1
-                                                                            ? Math.round(
-                                                                                (sessionDataRef.current.at(-1)!.timestamp! -
-                                                                                    sessionDataRef.current[0].timestamp!) /
-                                                                                60000
-                                                                            )
+                                                                            ? Math.floor((sessionDataRef.current.at(-1)!.timestamp! - sessionDataRef.current[0].timestamp!) / 60000)
                                                                             : 0
                                                                     }
                                                                     darkMode={darkMode}
@@ -661,6 +655,25 @@ export default function SignalVisualizer() {
                                                                                     <span className="text-sm font-bold text-[#5FB9BA]">{pct}%</span>
                                                                                 </div>
                                                                             ))}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        <div className="p-3 rounded-xl bg-pink-100 dark:bg-pink-900/20 border border-pink-300 dark:border-pink-800 text-center">
+                                                                            <div className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase mb-2">
+                                                                                Average HRV
+                                                                            </div>
+                                                                            <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                                                {results.averageHRV ?? "--"} ms
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="p-3 rounded-xl bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 text-center">
+                                                                            <div className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase mb-2">
+                                                                                Average BPM
+                                                                            </div>
+                                                                            <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                                                {results.averageBPM ?? "--"}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
 
@@ -763,7 +776,7 @@ export default function SignalVisualizer() {
                     <div className="lg:col-span-2 flex flex-col gap-2  h-full min-h-0 overflow-hidden p-2 sm:p-3 md:p-4">
 
                         {/* EEG Row 1: Brain Image - Reduced height */}
-                        <div className={`rounded-xl shadow-md py-2 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 border ${cardBg} flex items-center justify-center transition-colors duration-300 flex-none`}
+                        <div className={`rounded-xl py-2 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 border ${cardBg} flex items-center justify-center transition-colors duration-300 flex-none`}
                             style={{ height: "70px" }}>
                             <div className="flex items-center w-full justify-center">
                                 <div className={`p-1 sm:p-2 md:p-3 rounded-xl duration-300`} style={{ marginRight: '1rem' }}>
@@ -781,7 +794,7 @@ export default function SignalVisualizer() {
                         </div>
 
                         {/* EEG Row 2: Radar Charts */}
-                        <div className={`rounded-xl shadow-lg p-2 sm:p-3 md:p-4 border ${cardBg} transition-all duration-300 h-2/5 min-h-0 overflow-hidden backdrop-blur-sm flex flex-col`}>
+                        <div className={`rounded-xl p-2 sm:p-3 md:p-4 border ${cardBg} transition-all duration-300 h-2/5 min-h-0 overflow-hidden backdrop-blur-sm flex flex-col`}>
 
                             {/* Content Area */}
                             <div className="flex-1 min-h-0 overflow-hidden">
@@ -815,11 +828,11 @@ export default function SignalVisualizer() {
                                                         <Radar
                                                             name="Ch0"
                                                             dataKey="value"
-                                                            stroke={channelColors.ch0}
+                                                            stroke={CHANNEL_COLORS.ch0}
                                                             strokeWidth={1.5}
-                                                            fill={channelColors.ch0}
+                                                            fill={CHANNEL_COLORS.ch0}
                                                             fillOpacity={0.3}
-                                                            dot={{ fill: channelColors.ch0, strokeWidth: 1, r: 2 }}
+                                                            dot={{ fill: CHANNEL_COLORS.ch0, strokeWidth: 1, r: 2 }}
                                                         />
                                                     </RadarChart>
                                                 </ResponsiveContainer>
@@ -860,11 +873,11 @@ export default function SignalVisualizer() {
                                                         <Radar
                                                             name="Ch1"
                                                             dataKey="value"
-                                                            stroke={channelColors.ch1}
+                                                            stroke={CHANNEL_COLORS.ch1}
                                                             strokeWidth={1.5}
-                                                            fill={channelColors.ch1}
+                                                            fill={CHANNEL_COLORS.ch1}
                                                             fillOpacity={0.3}
-                                                            dot={{ fill: channelColors.ch1, strokeWidth: 1, r: 2 }}
+                                                            dot={{ fill: CHANNEL_COLORS.ch1, strokeWidth: 1, r: 2 }}
                                                         />
                                                     </RadarChart>
                                                 </ResponsiveContainer>
@@ -908,7 +921,7 @@ export default function SignalVisualizer() {
                     <div className="lg:col-span-2 flex flex-col gap-2  h-full min-h-0 overflow-hidden p-2 sm:p-3 md:p-4">
 
                         {/* ECG Row 1: Heart Image - Fixed height */}
-                        <div className={`rounded-xl shadow-md py-2 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 border ${cardBg} flex items-center justify-center transition-colors duration-300 flex-none`}
+                        <div className={`rounded-xl py-2 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 border ${cardBg} flex items-center justify-center transition-colors duration-300 flex-none`}
                             style={{ height: "70px" }}>
                             <div className="flex items-center w-full justify-center">
                                 {connected && (
@@ -934,7 +947,7 @@ export default function SignalVisualizer() {
                         </div>
 
                         {/* ECG Row 2: BPM + HRV Info - Clean & Spacious */}
-                        <div className={`${cardBg} rounded-xl shadow-md border transition-colors duration-300 h-2/5 min-h-0 overflow-hidden flex flex-col`} style={{ padding: '0.3rem' }}>
+                        <div className={`${cardBg} rounded-xl border transition-colors duration-300 h-2/5 min-h-0 overflow-hidden flex flex-col`} style={{ padding: '0.3rem' }}>
                             {/* ── Top Section: Heart Rate Stats ── */}
                             <div className="grid grid-cols-5 gap-2  flex-shrink-0 mb-3 " style={{ padding: '2px' }}>
                                 {/* Current BPM - takes 2 columns */}
@@ -1073,11 +1086,10 @@ export default function SignalVisualizer() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className={`flex flex-col items-center ${
-                                    darkMode? "bg-zinc-700" : "bg-stone-200"
-                                } rounded-lg`} style={{ padding: '0.2rem ' }}>
+                                <div className={`flex flex-col items-center ${darkMode ? "bg-zinc-700" : "bg-stone-200"
+                                    } rounded-lg`} style={{ padding: '0.2rem ' }}>
                                     <span className={`text-xs ${primaryAccent} mb-1`} style={{ fontSize: '16px' }}>
-                                      State
+                                        State
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <div className="flex items-center" style={{ transform: 'scale(0.8)' }}>
@@ -1089,7 +1101,7 @@ export default function SignalVisualizer() {
                         </div>
 
                         {/* ECG Chart - Remaining height */}
-                        <div className={`flex-1 min-h-0 rounded-xl overflow-hidden p-1 sm:p-2 md:p-3 transition-colors duration-300 ${darkMode ? 'bg-zinc-800/90' : 'bg-white'}`}>
+                        <div className={`flex-1 min-h-0 rounded-xl overflow-hidden p-1 sm:p-2 md:p-3 transition-colors duration-300  ${darkMode ? 'bg-zinc-800/90' : 'bg-white'}`}>
                             <WebglPlotCanvas
                                 ref={canvasecgRef}
                                 channels={[2]} // ECG Channel 2
@@ -1103,12 +1115,12 @@ export default function SignalVisualizer() {
 
             {/* Footer - Fixed height */}
             <footer className={`h-[4%] py-1 ${darkMode ? "bg-zinc-900/90 border-t border-amber-900/20" : "bg-white/90 backdrop-blur-sm border-t border-amber-100"} 
-                shadow-inner transition-colors duration-300 z-10 flex-shrink-0`}
+                transition-colors duration-300 z-10 flex-shrink-0`}
                 style={{ paddingLeft: '0.3125rem', paddingRight: '0.3125rem' }}>
                 <div className="w-full h-full flex flex-col sm:flex-row justify-between items-center" style={{ paddingLeft: '1.25rem', paddingRight: '1.25rem' }}>
                     <div className={`${textSecondary} text-xs sm:text-sm md:text-base mb-1 sm:mb-0`}>
-                        <span className="font-medium">CortEX</span> | &copy; {new Date().getFullYear()}{" "}  
-                           <Link href="https://upsidedownlabs.tech/" target="_blank">
+                        <span className="font-medium">CortEX</span> | &copy; {new Date().getFullYear()}{" "}
+                        <Link href="https://upsidedownlabs.tech/" target="_blank">
                             Upside Down Labs
                         </Link>
                     </div>

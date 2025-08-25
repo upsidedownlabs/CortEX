@@ -1,5 +1,5 @@
 'use client'
-import React, { useRef, useEffect,useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Award } from 'lucide-react';
 
 interface EEGSample {
@@ -162,7 +162,7 @@ const MeditationAnalysis: React.FC<Props> = ({
     return () => resizeObserver.disconnect();
   }, []);
   // Replace the useEffect canvas rendering with this:
-  
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -170,11 +170,11 @@ const MeditationAnalysis: React.FC<Props> = ({
 
     // Get device pixel ratio for crisp rendering on high-DPI displays
     const dpr = window.devicePixelRatio || 1;
-    
+
     // Set canvas resolution to match display size
     canvas.width = canvasSize.width * dpr;
     canvas.height = canvasSize.height * dpr;
-    
+
     // Scale the context to account for the higher resolution
     ctx.scale(dpr, dpr);
 
@@ -223,13 +223,9 @@ const MeditationAnalysis: React.FC<Props> = ({
     ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
     ctx.font = '14px system-ui';
     ctx.textAlign = 'center';
-    
-    let actualSessionDurationSeconds: number;
-    if (data.length > 1 && data[0].timestamp && data[data.length - 1].timestamp) {
-      actualSessionDurationSeconds = (data[data.length - 1].timestamp! - data[0].timestamp!) / 1000;
-    } else {
-      actualSessionDurationSeconds = sessionDuration * 60;
-    }
+
+    // Always use the exact duration passed from props
+    const actualSessionDurationSeconds = sessionDuration * 60;
 
     const timePerPhase = actualSessionDurationSeconds / 12;
 
@@ -261,11 +257,9 @@ const MeditationAnalysis: React.FC<Props> = ({
     }
   };
 
-
-
   return (
     <div className={`w-full  h-full  bg-slate-800 rounded-sm overflow-hidden shadow-2xl ${className}`}>
- <div className="p-6" style={{ padding: '10px' }}>
+      <div className="p-6" style={{ padding: '10px' }}>
         {/* Phases Canvas */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2" style={{ padding: '10px' }}>
@@ -273,8 +267,8 @@ const MeditationAnalysis: React.FC<Props> = ({
             <span className="text-xs text-slate-500">{metrics.phases.length} phases detected</span>
           </div>
           <div className="w-full h-[120px]">
-            <canvas 
-              ref={canvasRef} 
+            <canvas
+              ref={canvasRef}
               className="w-full h-full rounded-xl"
               style={{
                 width: '100%',
@@ -298,17 +292,9 @@ const MeditationAnalysis: React.FC<Props> = ({
 
         {/* Session Insights */}
         <div className="mt-6 p-4 bg-emerald-900/20 rounded-xl border border-emerald-800/30" style={{ padding: '10px' }}>
-          <div className="flex items-center space-x-2 mb-2">
-            <Award className="w-4 h-10 text-emerald-400" />
-            <span className="text-sm font-medium text-emerald-300">Session Insights</span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            {meditationScore >= 80
-              ? "Outstanding session! You maintained deep meditative states with excellent mind control."
-              : meditationScore >= 60
-                ? "Good progress! Your relaxation response is developing well. Try extending session time."
-                : "Keep practicing! Focus on breathing techniques to improve alpha wave consistency."}
-          </p>
+
+          <span className="text-sm text-slate-200 mt-2 block ">CortEX application is an open-source free to use software designed to work with Neuro PlayGround Lite. It's is a wellness and research tool, not a medical application and should not be treated like one. There is no Warranty, you may use it on your own risk. You agree to the terms if you use the application.
+          </span>
         </div>
 
       </div>
