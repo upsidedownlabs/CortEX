@@ -573,8 +573,6 @@ export default function SignalVisualizer() {
                                                                 Close
                                                             </button>
                                                         </div>
-
-
                                                         {/* Main content area */}
                                                         <div className="flex flex-col lg:flex-row p-4 sm:p-6 flex-1">
                                                             {/* Left Panel - Waveform Visualization */}

@@ -782,27 +782,44 @@ export const MeditationSession = ({
                                     {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                                 </div>
                                 <div className="text-md md:text-lg opacity-70 mt-1">
-                                    remaining
+                                    remaining̥
                                 </div>
                             </div>
                         </div>
                         {/* Enhanced Progress Circle - Responsive stroke */}
-                        <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle
-                                cx="50"
-                                cy="50"
-                                r="38"
-                                stroke={darkMode ? "#fcd34d" : "#d97706"} // Amber color for primaryAccent
-                                strokeWidth="3"
-                                fill="none"
-                                strokeDasharray={Math.PI * 2 * 38}
-                                strokeDashoffset={(Math.PI * 2 * 38 * (1 - progressPercentage / 100))}
-                                className="transition-all duration-1000 ease-linear"
-                                strokeLinecap="round"
-                            />
-                        </svg>
+                        {window.devicePixelRatio <= 1.25 && window.devicePixelRatio >= 0.80 && (
+                            <svg
+                                className="absolute inset-0 w-full h-full transform -rotate-90"
+                                viewBox="0 0 100 100"
+                                style={{
+                                    minWidth: '60px',
+                                    minHeight: '60px',
+                                    maxWidth: '400px',
+                                    maxHeight: '400px',
+                                    width: '100%',
+                                    height: '100%',
+                                }}
+                            >
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="38"
+                                    stroke={darkMode ? "#fcd34d" : "#d97706"}
+                                    strokeWidth={
+                                        window.innerWidth < 400 ? "2"
+                                            : window.innerWidth < 800 ? "3"
+                                                : window.innerWidth < 1200 ? "4"
+                                                    : "5"
+                                    }
+                                    fill="none"
+                                    strokeDasharray={Math.PI * 2 * 38}
+                                    strokeDashoffset={Math.PI * 2 * 38 * (1 - progressPercentage / 100)}
+                                    className="transition-all duration-1000 ease-linear"
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                        )}
                     </div>
-
 
                     {/* Modified End Session Button - Only enabled when timer reaches zero */}
                     <button
