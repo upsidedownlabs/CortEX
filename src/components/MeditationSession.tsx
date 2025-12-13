@@ -782,7 +782,7 @@ export const MeditationSession = ({
                                     {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                                 </div>
                                 <div className="text-md md:text-lg opacity-70 mt-1">
-                                    remaining̥
+                                    remaining
                                 </div>
                             </div>
                         </div>
@@ -849,7 +849,7 @@ export const MeditationSession = ({
                 </div>
             )}
 
-            <style jsx>{`
+            <style>{`
                 @keyframes breathe {
                     0%, 100% { 
                         transform: scale(1); 
