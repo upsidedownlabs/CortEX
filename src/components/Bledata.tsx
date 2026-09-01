@@ -119,6 +119,8 @@ export function useBleStream(datastreamCallback?: (data: number[]) => void) {
 
   // Disconnect and clean up everything
   const disconnect = async () => {
+    if (!deviceRef.current) return;
+
     if (streaming && deviceRef.current?.gatt?.connected) {
       await stop();
       deviceRef.current.gatt.disconnect();
